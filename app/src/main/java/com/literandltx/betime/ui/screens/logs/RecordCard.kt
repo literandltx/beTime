@@ -1,36 +1,20 @@
 package com.literandltx.betime.ui.screens.logs
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxState
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.dimensionResource
@@ -44,7 +28,6 @@ import com.literandltx.betime.data.model.TimerRecord
 import com.literandltx.betime.data.model.TimerRecordDetails
 import com.literandltx.betime.data.preferences.AppThemeMode
 import com.literandltx.betime.data.preferences.AppThemeModeProvider
-import com.literandltx.betime.ui.shared.DeleteIcon
 import com.literandltx.betime.ui.shared.LabelIcon
 import com.literandltx.betime.ui.shared.OptionsMenu
 import com.literandltx.betime.ui.theme.TimerTheme
@@ -52,7 +35,6 @@ import com.literandltx.betime.util.formatTime
 import java.text.SimpleDateFormat
 import java.util.Date
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecordCard(
     timerRecordDetails: TimerRecordDetails,
@@ -61,101 +43,35 @@ fun RecordCard(
     onEditClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        positionalThreshold = { totalDistance -> totalDistance * 0.4f }
-    )
-
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
-            onDeleteClick()
-            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-        }
-    }
-
-    SwipeToDismissBox(
-        state = dismissState,
+    Card(
         modifier = modifier.fillMaxWidth(),
-        enableDismissFromStartToEnd = false,
-        backgroundContent = {
-            RecordSwipeBackground(
-                dismissState = dismissState,
-                shape = shape
-            )
-        }
-    ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = shape,
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = dimensionResource(R.dimen.card_elevation)
-            ),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                contentColor = MaterialTheme.colorScheme.onSurface
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = dimensionResource(R.dimen.padding_content_horizontal),
-                        vertical = dimensionResource(R.dimen.padding_large)
-                    ),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RecordCardInfo(
-                    timerRecordDetails = timerRecordDetails,
-                    modifier = Modifier.weight(1f)
-                )
-                OptionsMenu(
-                    onEditClick = onEditClick,
-                    onDeleteClick = onDeleteClick
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun RecordSwipeBackground(
-    dismissState: SwipeToDismissBoxState,
-    shape: Shape,
-    modifier: Modifier = Modifier
-) {
-    val isSwiping = dismissState.targetValue == SwipeToDismissBoxValue.EndToStart
-
-    val backgroundColor by animateColorAsState(
-        targetValue = if (isSwiping) {
-            MaterialTheme.colorScheme.errorContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerLow
-        },
-        label = "SwipeBackgroundColor"
-    )
-
-    val iconScale by animateFloatAsState(
-        targetValue = if (isSwiping) 1.15f else 0.75f,
-        label = "SwipeIconScale"
-    )
-
-    val alphaAnim by animateFloatAsState(
-        targetValue = if (isSwiping) 1f else 0.9f,
-        label = "SwipeIconAlpha"
-    )
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .clip(shape)
-            .background(backgroundColor)
-            .padding(horizontal = dimensionResource(R.dimen.padding_swipe_background)),
-        contentAlignment = Alignment.CenterEnd
-    ) {
-        DeleteIcon(
-            iconScale = iconScale,
-            alphaAnim = alphaAnim
+        shape = shape,
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = dimensionResource(R.dimen.card_elevation)
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface
         )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = dimensionResource(R.dimen.padding_content_horizontal),
+                    vertical = dimensionResource(R.dimen.padding_large)
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RecordCardInfo(
+                timerRecordDetails = timerRecordDetails,
+                modifier = Modifier.weight(1f)
+            )
+            OptionsMenu(
+                onEditClick = onEditClick,
+                onDeleteClick = onDeleteClick
+            )
+        }
     }
 }
 
