@@ -1,0 +1,363 @@
+package com.literandltx.betime.ui.screens.logs
+
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocalOffer
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import com.literandltx.betime.R
+import com.literandltx.betime.data.model.Label
+import com.literandltx.betime.data.preferences.AppThemeMode
+import com.literandltx.betime.data.preferences.AppThemeModeProvider
+import com.literandltx.betime.ui.shared.CloseIconButton
+import com.literandltx.betime.ui.shared.ConfirmIconButton
+import com.literandltx.betime.ui.shared.EditableTextField
+import com.literandltx.betime.ui.theme.SmallElementShape
+import com.literandltx.betime.ui.theme.TimerTheme
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+
+@Composable
+fun EditorRecordCard(
+    initialValueSeconds: Int,
+    initialStartTimestamp: Long,
+    initialLabelId: Int?,
+    labels: List<Label>,
+    onConfirm: (durationSeconds: Int, startTimestamp: Long, labelId: Int?) -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String = stringResource(R.string.durationPlaceholder),
+    shape: Shape = MaterialTheme.shapes.large
+) {
+    var textFieldValue by remember(initialValueSeconds) {
+        val initialMinutes = if (initialValueSeconds > 0) (initialValueSeconds / 60).toString() else ""
+        mutableStateOf(
+            TextFieldValue(
+                text = initialMinutes,
+                selection = TextRange(initialMinutes.length)
+            )
+        )
+    }
+
+    var selectedTimestamp by remember(initialStartTimestamp) { mutableStateOf(initialStartTimestamp) }
+    var selectedLabelId by remember(initialLabelId) { mutableStateOf(initialLabelId) }
+
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    val submitForm = {
+        val mins = textFieldValue.text.toIntOrNull() ?: 0
+        if (mins > 0) onConfirm(mins * 60, selectedTimestamp, selectedLabelId)
+    }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = shape,
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = dimensionResource(R.dimen.card_elevation)
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dimensionResource(R.dimen.padding_content_horizontal)),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_standard))
+        ) {
+            EditorDurationInput(
+                textFieldValue = textFieldValue,
+                onValueChange = { textFieldValue = it },
+                placeholder = placeholder,
+                focusRequester = focusRequester,
+                onConfirm = submitForm,
+                onCancel = onCancel
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                EditorDateTimePicker(
+                    selectedTimestamp = selectedTimestamp,
+                    onTimestampSelected = { selectedTimestamp = it }
+                )
+
+                EditorLabelPicker(
+                    labels = labels,
+                    selectedLabelId = selectedLabelId,
+                    onLabelSelected = { selectedLabelId = it }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EditorDurationInput(
+    textFieldValue: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    placeholder: String,
+    focusRequester: FocusRequester,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        EditableTextField(
+            value = textFieldValue,
+            onValueChange = {
+                if (it.text.isEmpty() || it.text.toLongOrNull() != null) {
+                    onValueChange(it)
+                }
+            },
+            placeholder = placeholder,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            keyboardType = KeyboardType.Number,
+            onConfirm = onConfirm,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 8.dp)
+                .focusRequester(focusRequester)
+        )
+
+        Text(
+            text = stringResource(R.string.timeUnitMin),
+            modifier = Modifier.padding(end = dimensionResource(R.dimen.padding_standard)),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        ConfirmIconButton(
+            onClick = onConfirm,
+            isEnabled = (textFieldValue.text.toLongOrNull() ?: 0L) > 0,
+            contentDescription = stringResource(R.string.confirmAction)
+        )
+
+        CloseIconButton(
+            onClick = onCancel,
+            contentDescription = stringResource(R.string.cancelAction)
+        )
+    }
+}
+
+@Composable
+fun EditorDateTimePicker(
+    selectedTimestamp: Long,
+    onTimestampSelected: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val locale = LocalLocale.current
+    val sdf = remember { SimpleDateFormat("MMM d, yyyy, h:mm:ss a", locale.platformLocale) }
+
+    fun openPicker() {
+        val calendar = Calendar.getInstance().apply { timeInMillis = selectedTimestamp }
+
+        DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                calendar.set(Calendar.YEAR, year)
+                calendar.set(Calendar.MONTH, month)
+                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+
+                TimePickerDialog(
+                    context,
+                    { _, hourOfDay, minute ->
+                        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                        calendar.set(Calendar.MINUTE, minute)
+                        onTimestampSelected(calendar.timeInMillis)
+                    },
+                    calendar.get(Calendar.HOUR_OF_DAY),
+                    calendar.get(Calendar.MINUTE),
+                    false
+                ).show()
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).show()
+    }
+
+    Text(
+        text = sdf.format(Date(selectedTimestamp)),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = modifier
+            .clip(SmallElementShape)
+            .clickable { openPicker() }
+            .padding(vertical = 4.dp, horizontal = 8.dp)
+    )
+}
+
+@Composable
+fun EditorLabelPicker(
+    labels: List<Label>,
+    selectedLabelId: Int?,
+    onLabelSelected: (Int?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val activeLabel = labels.find { it.id == selectedLabelId }
+    val noLabelText = stringResource(R.string.noLabelMessage)
+
+    Box(modifier = modifier) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .clickable { expanded = true }
+                .padding(vertical = 4.dp, horizontal = 8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.LocalOffer,
+                contentDescription = null,
+                tint = activeLabel?.composeColor ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(dimensionResource(R.dimen.standard_icon_size))
+            )
+            Text(
+                text = activeLabel?.name ?: noLabelText,
+                style = MaterialTheme.typography.labelMedium,
+                color = activeLabel?.composeColor ?: MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text(noLabelText) },
+                onClick = {
+                    onLabelSelected(null)
+                    expanded = false
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.LocalOffer,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            )
+            labels.forEach { label ->
+                DropdownMenuItem(
+                    text = { Text(label.name) },
+                    onClick = {
+                        onLabelSelected(label.id)
+                        expanded = false
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.LocalOffer,
+                            contentDescription = null,
+                            tint = label.composeColor
+                        )
+                    }
+                )
+            }
+        }
+    }
+}
+
+private val sampleLabels = listOf(
+    Label(id = 1, name = "Work & Coding", colorArgb = 0xFF6200EE.toInt(), orderIndex = 0),
+    Label(id = 2, name = "English", colorArgb = 0xFF03DAC6.toInt(), orderIndex = 1)
+)
+
+@Preview(group = "Themes", showBackground = true)
+@Composable
+private fun EditorRecordCardEditModePreview(
+    @PreviewParameter(AppThemeModeProvider::class) themeMode: AppThemeMode
+) {
+    TimerTheme(themeMode = themeMode) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Box(modifier = Modifier.padding(dimensionResource(R.dimen.padding_content_horizontal))) {
+                EditorRecordCard(
+                    initialValueSeconds = 2700,
+                    initialStartTimestamp = System.currentTimeMillis(),
+                    initialLabelId = 1,
+                    labels = sampleLabels,
+                    onConfirm = { _, _, _ -> },
+                    onCancel = {}
+                )
+            }
+        }
+    }
+}
+
+@Preview(group = "Edge Cases", showBackground = true)
+@Composable
+private fun EditorRecordCardNewModePreview(
+    @PreviewParameter(AppThemeModeProvider::class) themeMode: AppThemeMode
+) {
+    TimerTheme(themeMode = themeMode) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Box(modifier = Modifier.padding(dimensionResource(R.dimen.padding_content_horizontal))) {
+                EditorRecordCard(
+                    initialValueSeconds = 0,
+                    initialStartTimestamp = System.currentTimeMillis(),
+                    initialLabelId = null,
+                    labels = sampleLabels,
+                    onConfirm = { _, _, _ -> },
+                    onCancel = {}
+                )
+            }
+        }
+    }
+}

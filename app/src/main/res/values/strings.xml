@@ -1,0 +1,161 @@
+<resources>
+    <string name="app_name">beTime</string>
+
+    <string name="ok">Ok</string>
+
+    <!-- Headers Titles -->
+    <string name="historyHeaderTitle">History</string>
+    <string name="activityHeaderTitle">Activity</string>
+    <string name="labelsHeaderTitle">Labels</string>
+    <string name="timersHeaderTitle">Timers</string>
+    <string name="settingsHeaderTitle">Settings</string>
+
+    <!-- General Action -->
+    <string name="editAction">Edit</string>
+    <string name="deleteAction">Delete</string>
+    <string name="confirmAction">Confirm</string>
+    <string name="cancelAction">Cancel</string>
+    <string name="undoAction">Undo</string>
+    <string name="exportCSVAction">Export CSV</string>
+    <string name="importCSVAction">Import CSV</string>
+
+    <!-- Timer Radial Action -->
+    <string name="addMinuteTimerAction">+1 min</string>
+    <string name="finishTimerAction">Finish</string>
+    <string name="closeTimerAction">Close</string>
+    <string name="resetTimerAction">Reset</string>
+
+    <!-- Message -->
+    <string name="noLabelMessage">No label</string>
+    <string name="noRecordsMessage">No records found.</string>
+    <string name="noItemsMessage">No items available</string>
+    <string name="recordDeletedMessage">Record deleted</string>
+    <string name="labelDeletedMessage">Label deleted</string>
+
+    <!-- Placeholder -->
+    <string name="newLabelPlaceholder">New label…</string>
+    <string name="newTimerPlaceholder">New timer…</string>
+    <string name="durationPlaceholder">Duration (min)…</string>
+    <string name="timerValuePlaceholder">Timer value (min)…</string>
+
+    <!-- Description -->
+    <string name="clickToStartTimerHint">Click to Start</string>
+    <string name="clickToPauseTimerHint">Click to pause</string>
+    <string name="clickToResumeTimerHint">Click to resume</string>
+
+    <!-- Widget -->
+    <string name="reorderMessage">Reorder</string>
+    <string name="customMessage">Custom</string>
+    <string name="recordsMessage">records</string>
+    <string name="averageStatsFormat">avg: %1$s</string>
+    <string name="heatmapMonthStatsFormat">%1$d %2$s this month</string>
+
+    <string name="selectTimeRangeTitle">Select Time Range</string>
+    <string name="customRangeAction">Custom Range…</string>
+
+    <!-- Time Span -->
+    <string name="timeSpanDay">Day</string>
+    <string name="timeSpanWeek">Week</string>
+    <string name="timeSpanMonth">Month</string>
+    <string name="timeSpanYear">Year</string>
+    <string name="timeSpanAll">All</string>
+
+    <!-- Donut Widget States -->
+    <string name="noRecordsToday">No records today</string>
+    <string name="noRecordsTomorrow">No records tomorrow</string>
+    <string name="noRecordsYesterday">No records yesterday</string>
+    <string name="noRecordsInDays">No records in %1$d days</string>
+    <string name="noRecordsDaysAgo">No records %1$d days ago</string>
+
+    <string name="noRecordsThisWeek">No records this week</string>
+    <string name="noRecordsNextWeek">No records next week</string>
+    <string name="noRecordsLastWeek">No records last week</string>
+    <string name="noRecordsInWeeks">No records in %1$d weeks</string>
+    <string name="noRecordsWeeksAgo">No records %1$d weeks ago</string>
+
+    <string name="noRecordsThisMonth">No records this month</string>
+    <string name="noRecordsNextMonth">No records next month</string>
+    <string name="noRecordsLastMonth">No records last month</string>
+    <string name="noRecordsInMonths">No records in %1$d months</string>
+    <string name="noRecordsMonthsAgo">No records %1$d months ago</string>
+
+    <string name="noRecordsPeriod">No records for this period</string>
+
+    <!-- Line Histogram & Charts -->
+    <string name="granularityDay">day</string>
+    <string name="granularityWeek">week</string>
+    <string name="granularityMonth">month</string>
+
+    <string name="weekLabelShort">W%1$d</string>
+
+    <string name="monthJan">Jan</string>
+    <string name="monthFeb">Feb</string>
+    <string name="monthMar">Mar</string>
+    <string name="monthApr">Apr</string>
+    <string name="monthMay">May</string>
+    <string name="monthJun">Jun</string>
+    <string name="monthJul">Jul</string>
+    <string name="monthAug">Aug</string>
+    <string name="monthSep">Sep</string>
+    <string name="monthOct">Oct</string>
+    <string name="monthNov">Nov</string>
+    <string name="monthDec">Dec</string>
+
+    <!-- Utils -->
+    <string name="timeUnitMin">min</string>
+    <string name="timerOptionFormat">%1$dm</string>
+    <string name="recordDurationFormat">%1$s min</string>
+
+    <!-- Time Format Utils -->
+    <string name="time_format_days">%1$dd</string>
+    <string name="time_format_hours">%1$dh</string>
+    <string name="time_format_minutes">%1$dm</string>
+    <string name="time_format_less_than_minute">&lt;1m</string>
+    <string name="time_format_zero">0m</string>
+
+    <!-- Date Utils -->
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+
+    <!-- Settings Sections -->
+    <string name="settingsAppearanceTitle">Appearance</string>
+    <string name="settingsPreferencesTitle">UI Preferences</string>
+
+    <!-- Settings Options: Appearance -->
+    <string name="appThemeTitle">Appearance</string>
+
+    <!-- Themes -->
+    <string name="themeSystemDefault">System default</string>
+    <string name="themeLight">Light</string>
+    <string name="themeDark">Dark</string>
+    <string name="themeDiscord">Discord</string>
+    <string name="themeLime">Lime</string>
+
+    <!-- Settings Options: Preferences -->
+    <string name="bottomNavigationTitle">Bottom Navigation</string>
+    <string name="bottomNavigationSubtitle">Show navigation bar</string>
+
+    <string name="timerChipTitle">Timer Chip</string>
+    <string name="timerChipSubtitle">Show timer selection chip</string>
+
+    <string name="labelChipTitle">Label Chip</string>
+    <string name="labelChipSubtitle">Show label selection chip</string>
+
+    <string name="historyAddButtonFabTitle">History Add Button FAB</string>
+    <string name="historyAddButtonFabSubtitle">Show floating action button</string>
+
+    <string name="timerProgressDotTitle">Timer Progress Dot</string>
+    <string name="timerProgressDotSubtitle">Moving indicator on timer circle</string>
+
+    <string name="timerActionHintsTitle">Timer Action Hints</string>
+    <string name="timerActionHintsSubtitle">Interaction guide under timer</string>
+
+    <string name="timerStartIndicatorTitle">Timer Start Indicator</string>
+    <string name="timerStartIndicatorSubtitle">Show hourglass icon on timer tap</string>
+
+    <string name="timerDoubleClickTitle">Timer Double Click</string>
+    <string name="timerDoubleClickSubtitle">Double tap to finish session</string>
+
+    <string name="timerSwipeDownTitle">Timer Swipe Down</string>
+    <string name="timerSwipeDownSubtitle">Swipe down to finish session</string>
+</resources>

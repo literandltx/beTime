@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+  <!-- Left Upper & Lower Wings -->
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 212 198 C 148 148, 66 124, 56 146 C 46 168, 92 222, 210 218 Z"
+      android:strokeWidth="11"
+      android:strokeColor="#DBA020"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 206 205 C 155 182, 102 172, 62 170"
+      android:strokeWidth="6.5"
+      android:strokeColor="#DBA020"
+      android:strokeLineCap="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 152 184 C 140 168, 130 155, 121 146"
+      android:strokeWidth="6.5"
+      android:strokeColor="#DBA020"
+      android:strokeLineCap="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 210 226 C 156 226, 106 238, 112 258 C 118 278, 174 274, 218 242 Z"
+      android:strokeWidth="11"
+      android:strokeColor="#DBA020"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 208 234 C 170 246, 138 256, 118 263"
+      android:strokeWidth="6.5"
+      android:strokeColor="#DBA020"
+      android:strokeLineCap="round" />
+
+  <!-- Right Upper & Lower Wings -->
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 300 198 C 364 148, 446 124, 456 146 C 466 168, 420 222, 302 218 Z"
+      android:strokeWidth="11"
+      android:strokeColor="#DBA020"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 306 205 C 357 182, 410 172, 450 170"
+      android:strokeWidth="6.5"
+      android:strokeColor="#DBA020"
+      android:strokeLineCap="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 360 184 C 372 168, 382 155, 391 146"
+      android:strokeWidth="6.5"
+      android:strokeColor="#DBA020"
+      android:strokeLineCap="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 302 226 C 356 226, 406 238, 400 258 C 394 278, 338 274, 294 242 Z"
+      android:strokeWidth="11"
+      android:strokeColor="#DBA020"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 304 234 C 342 246, 374 256, 394 263"
+      android:strokeWidth="6.5"
+      android:strokeColor="#DBA020"
+      android:strokeLineCap="round" />
+
+  <!-- Antennae -->
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 241 136 C 231 114, 215 98, 193 98"
+      android:strokeWidth="11"
+      android:strokeColor="#283238"
+      android:strokeLineCap="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 271 136 C 281 114, 297 98, 319 98"
+      android:strokeWidth="11"
+      android:strokeColor="#283238"
+      android:strokeLineCap="round" />
+
+  <!-- Head -->
+  <path
+      android:fillColor="#283238"
+      android:pathData="M 256 132 C 232 132, 213 145, 213 165 C 213 175, 216 182, 221 185 C 231 177, 243 174, 256 174 C 269 174, 281 177, 291 185 C 296 182, 299 175, 299 165 C 299 145, 280 132, 256 132 Z" />
+
+  <!-- Eyes -->
+  <path
+      android:fillColor="#FFFFFF"
+      android:pathData="M 227,148.5 A 4.5,9.5 10 1,1 227,167.5 A 4.5,9.5 10 1,1 227,148.5 Z" />
+  <path
+      android:fillColor="#FFFFFF"
+      android:pathData="M 285,148.5 A 4.5,9.5 -10 1,1 285,167.5 A 4.5,9.5 -10 1,1 285,148.5 Z" />
+
+  <!-- Top Hourglass Bar -->
+  <path
+      android:fillColor="#283238"
+      android:pathData="M 222,187 L 290,187 A 7,7 0 0,1 297,194 L 297,194 A 7,7 0 0,1 290,201 L 222,201 A 7,7 0 0,1 215,194 L 215,194 A 7,7 0 0,1 222,187 Z" />
+
+  <!-- Upper Sand -->
+  <path
+      android:fillColor="#F4B41A"
+      android:pathData="M 227 224 C 236 221, 246 226, 256 226 L 256 266 C 253 255, 234 244, 227 224 Z" />
+  <path
+      android:fillColor="#D59A17"
+      android:pathData="M 285 224 C 276 221, 266 226, 256 226 L 256 266 C 259 255, 278 244, 285 224 Z" />
+
+  <!-- Falling Sand Drops -->
+  <path
+      android:fillColor="#F4B41A"
+      android:pathData="M 256,272.6 A 3.4,3.4 0 1,1 256,279.4 A 3.4,3.4 0 1,1 256,272.6 Z" />
+  <path
+      android:fillColor="#F4B41A"
+      android:pathData="M 256,285.6 A 3.4,3.4 0 1,1 256,292.4 A 3.4,3.4 0 1,1 256,285.6 Z" />
+
+  <!-- Lower Sand Pile -->
+  <path
+      android:fillColor="#F4B41A"
+      android:pathData="M 256 299 L 211 339 C 209 346, 211 353, 215 357 L 256 357 Z" />
+  <path
+      android:fillColor="#D59A17"
+      android:pathData="M 256 299 L 301 339 C 303 346, 301 353, 297 357 L 256 357 Z" />
+
+  <!-- Hourglass Frame -->
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 218 206 C 214 236, 245 248, 245 264 C 245 282, 204 312, 204 358"
+      android:strokeWidth="9.5"
+      android:strokeColor="#283238"
+      android:strokeLineCap="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 294 206 C 298 236, 267 248, 267 264 C 267 282, 308 312, 308 358"
+      android:strokeWidth="9.5"
+      android:strokeColor="#283238"
+      android:strokeLineCap="round" />
+
+  <!-- Bottom Hourglass Bar -->
+  <path
+      android:fillColor="#283238"
+      android:pathData="M 212,363 L 300,363 A 7,7 0 0,1 307,370 L 307,370 A 7,7 0 0,1 300,377 L 212,377 A 7,7 0 0,1 205,370 L 205,370 A 7,7 0 0,1 212,363 Z" />
+
+  <!-- Abdomen Tip / Stinger -->
+  <path
+      android:fillColor="#F4B41A"
+      android:pathData="M 222 382 L 256 382 L 256 404 C 241 400, 229 392, 222 382 Z" />
+  <path
+      android:fillColor="#D59A17"
+      android:pathData="M 290 382 L 256 382 L 256 404 C 271 400, 283 392, 290 382 Z" />
+  <path
+      android:fillColor="#283238"
+      android:pathData="M 213 382 C 221 399, 238 411, 256 422 C 274 411, 291 399, 299 382 L 289 382 C 281 393, 269 401, 256 404 C 243 401, 231 393, 223 382 Z" />
+
+  <!-- Left Legs -->
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 211 268 C 194 276, 184 292, 179 312"
+      android:strokeWidth="13"
+      android:strokeColor="#283238"
+      android:strokeLineCap="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 176 326 L 164 352"
+      android:strokeWidth="12"
+      android:strokeColor="#283238"
+      android:strokeLineCap="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 197 324 C 193 340, 192 354, 193 366"
+      android:strokeWidth="13"
+      android:strokeColor="#283238"
+      android:strokeLineCap="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 192 380 L 186 404"
+      android:strokeWidth="12"
+      android:strokeColor="#283238"
+      android:strokeLineCap="round" />
+
+  <!-- Right Legs -->
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 301 268 C 318 276, 328 292, 333 312"
+      android:strokeWidth="13"
+      android:strokeColor="#283238"
+      android:strokeLineCap="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 336 326 L 348 352"
+      android:strokeWidth="12"
+      android:strokeColor="#283238"
+      android:strokeLineCap="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 315 324 C 319 340, 320 354, 319 366"
+      android:strokeWidth="13"
+      android:strokeColor="#283238"
+      android:strokeLineCap="round" />
+  <path
+      android:fillColor="#00000000"
+      android:pathData="M 320 380 L 326 404"
+      android:strokeWidth="12"
+      android:strokeColor="#283238"
+      android:strokeLineCap="round" />
+</vector>

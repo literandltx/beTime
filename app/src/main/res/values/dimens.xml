@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="navigation_bar_height">80.dp</dimen>
+    <dimen name="navigation_bar_hidden_padding">25.dp</dimen>
+
+    <dimen name="standard_button_size">36.dp</dimen>
+    <dimen name="standard_icon_size">18.dp</dimen>
+    <dimen name="medium_icon_size">20.dp</dimen>
+
+    <dimen name="card_elevation">1.dp</dimen>
+    <dimen name="padding_small">4.dp</dimen>
+    <dimen name="padding_medium">6.dp</dimen>
+    <dimen name="padding_standard">12.dp</dimen>
+    <dimen name="padding_large">14.dp</dimen>
+    <dimen name="padding_content_horizontal">16.dp</dimen>
+    <dimen name="padding_swipe_background">24.dp</dimen>
+
+    <dimen name="timer_card_top_padding">8.dp</dimen>
+    <dimen name="timer_card_end_padding">8.dp</dimen>
+    <dimen name="timer_card_content_horizontal">16.dp</dimen>
+    <dimen name="timer_card_content_vertical">12.dp</dimen>
+    <dimen name="timer_delete_badge_size">24.dp</dimen>
+    <dimen name="timer_delete_badge_offset">8.dp</dimen>
+    <dimen name="timer_delete_badge_padding">4.dp</dimen>
+    <dimen name="timer_item_horizontal_spacing">4.dp</dimen>
+    <dimen name="timer_item_vertical_spacing">8.dp</dimen>
+</resources>

@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+    <defs>
+        <g id="wing-left">
+            <!-- Upper wing -->
+            <path d="M 212 198 C 148 148, 66 124, 56 146 C 46 168, 92 222, 210 218 Z"
+                fill="none" stroke="#DBA020" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"/>
+            <!-- Upper wing veins -->
+            <path d="M 206 205 C 155 182, 102 172, 62 170"
+                fill="none" stroke="#DBA020" stroke-width="6.5" stroke-linecap="round"/>
+<!--            <path d="M 152 184 C 138 164, 125 148, 114 139"-->
+<!--                fill="none" stroke="#DBA020" stroke-width="6.5" stroke-linecap="round"/>-->
+            <!-- Lower wing -->
+            <path d="M 210 226 C 156 226, 106 238, 112 258 C 118 278, 174 274, 218 242 Z"
+                fill="none" stroke="#DBA020" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"/>
+            <!-- Lower wing vein -->
+            <path d="M 208 234 C 170 246, 138 256, 118 263"
+                fill="none" stroke="#DBA020" stroke-width="6.5" stroke-linecap="round"/>
+        </g>
+
+        <g id="legs-left">
+            <!-- Middle leg (femur + tarsus) -->
+            <path d="M 211 268 C 194 276, 184 292, 179 312"
+                fill="none" stroke="#283238" stroke-width="13" stroke-linecap="round"/>
+            <path d="M 176 326 L 164 352"
+                fill="none" stroke="#283238" stroke-width="12" stroke-linecap="round"/>
+            <!-- Hind leg (femur + tarsus) -->
+            <path d="M 197 324 C 193 340, 192 354, 193 366"
+                fill="none" stroke="#283238" stroke-width="13" stroke-linecap="round"/>
+            <path d="M 192 380 L 186 404"
+                fill="none" stroke="#283238" stroke-width="12" stroke-linecap="round"/>
+        </g>
+    </defs>
+
+    <!-- Wings (Left & Mirrored Right) -->
+    <use href="#wing-left"/>
+    <use href="#wing-left" transform="translate(512, 0) scale(-1, 1)"/>
+
+    <!-- Antennae -->
+    <path d="M 241 136 C 231 114, 215 98, 193 98"
+        fill="none" stroke="#283238" stroke-width="11" stroke-linecap="round"/>
+    <path d="M 271 136 C 281 114, 297 98, 319 98"
+        fill="none" stroke="#283238" stroke-width="11" stroke-linecap="round"/>
+
+    <!-- Head -->
+    <path d="M 256 132
+           C 232 132, 213 145, 213 165
+           C 213 175, 216 182, 221 185
+           C 231 177, 243 174, 256 174
+           C 269 174, 281 177, 291 185
+           C 296 182, 299 175, 299 165
+           C 299 145, 280 132, 256 132 Z"
+        fill="#283238"/>
+
+    <!-- Eyes -->
+<!--    <ellipse cx="227" cy="158" rx="4.5" ry="9.5" transform="rotate(10 227 158)" fill="#FFFFFF"/>-->
+<!--    <ellipse cx="285" cy="158" rx="4.5" ry="9.5" transform="rotate(-10 285 158)" fill="#FFFFFF"/>-->
+
+    <!-- Top Hourglass Bar -->
+    <rect x="215" y="187" width="82" height="14" rx="7" fill="#283238"/>
+
+    <!-- Upper Sand (Left bright gold, Right shaded gold) -->
+    <path d="M 227 224 C 236 221, 246 226, 256 226 L 256 266 C 253 255, 234 244, 227 224 Z" fill="#F4B41A"/>
+    <path d="M 285 224 C 276 221, 266 226, 256 226 L 256 266 C 259 255, 278 244, 285 224 Z" fill="#D59A17"/>
+
+    <!-- Falling Sand Drops -->
+    <circle cx="256" cy="276" r="3.4" fill="#F4B41A"/>
+    <circle cx="256" cy="289" r="3.4" fill="#F4B41A"/>
+
+    <!-- Lower Sand Pile (Left bright gold, Right shaded gold) -->
+    <path d="M 256 299 L 211 339 C 209 346, 211 353, 215 357 L 256 357 Z" fill="#F4B41A"/>
+    <path d="M 256 299 L 301 339 C 303 346, 301 353, 297 357 L 256 357 Z" fill="#D59A17"/>
+
+    <!-- Hourglass Glass Frame -->
+    <path d="M 218 206
+           C 214 236, 245 248, 245 264
+           C 245 282, 204 312, 204 358"
+        fill="none" stroke="#283238" stroke-width="9.5" stroke-linecap="round"/>
+    <path d="M 294 206
+           C 298 236, 267 248, 267 264
+           C 267 282, 308 312, 308 358"
+        fill="none" stroke="#283238" stroke-width="9.5" stroke-linecap="round"/>
+
+    <!-- Bottom Hourglass Bar -->
+    <rect x="205" y="363" width="102" height="14" rx="7" fill="#283238"/>
+
+    <!-- Abdomen Tip / Stinger -->
+    <!-- Inner gold stripe -->
+    <path d="M 222 382 L 256 382 L 256 404 C 241 400, 229 392, 222 382 Z" fill="#F4B41A"/>
+    <path d="M 290 382 L 256 382 L 256 404 C 271 400, 283 392, 290 382 Z" fill="#D59A17"/>
+    <!-- Outer dark slate shell & stinger point -->
+    <path d="M 213 382
+           C 221 399, 238 411, 256 422
+           C 274 411, 291 399, 299 382
+           L 289 382
+           C 281 393, 269 401, 256 404
+           C 243 401, 231 393, 223 382 Z"
+        fill="#283238"/>
+
+    <!-- Legs (Left & Mirrored Right) -->
+<!--    <use href="#legs-left"/>-->
+<!--    <use href="#legs-left" transform="translate(512, 0) scale(-1, 1)"/>-->
+</svg>
