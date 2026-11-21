@@ -1,0 +1,10 @@
+<b>beTime</b> is a minimalist, open-source productivity time tracker designed for clean, distraction-free activity logging.
+
+<b>Core Features</b>
+- <b>Maximum Tracking Flexibility:</b> Whether you use Pomodoro sessions or open-ended timers, customize labels, reorderable widgets, and stats to fit any workflow.
+- <b>Dynamic Minimalist Design:</b> A clean, responsive Material 3 interface that adapts smoothly to your routines, actions, and light or dark themes.
+
+<b>Private by Design</b>
+- No accounts or cloud sync required
+- No ads, no analytics, no tracking
+- All your time logs and labels stay locally on your device

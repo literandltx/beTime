@@ -1,0 +1,1 @@
+Minimalist productivity time tracker. Clean, fast, customizable with no clutter.
