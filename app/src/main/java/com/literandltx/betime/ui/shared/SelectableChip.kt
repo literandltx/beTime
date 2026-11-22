@@ -1,6 +1,7 @@
 package com.literandltx.betime.ui.shared
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -49,13 +50,15 @@ fun SelectableChip(
             width = borderWidth,
             brush = SolidColor(outlineColor)
         ),
-        modifier = modifier.padding(horizontal = 4.dp, vertical = 0.dp)
+        modifier = modifier.padding(horizontal = 4.dp, vertical = 2.dp)
     ) {
         Box(
-            modifier = Modifier.padding(
-                horizontal = contentHorizontalPadding,
-                vertical = 12.dp
-            ),
+            modifier = Modifier
+                .defaultMinSize(minWidth = 48.dp, minHeight = 44.dp)
+                .padding(
+                    horizontal = contentHorizontalPadding,
+                    vertical = 12.dp
+                ),
             contentAlignment = Alignment.Center
         ) {
             Text(
