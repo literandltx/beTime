@@ -10,12 +10,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -28,11 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -49,6 +42,7 @@ import com.literandltx.betime.ui.AppViewModelProvider
 import com.literandltx.betime.ui.screens.settings.SettingsViewModel
 import com.literandltx.betime.ui.shared.GenericModal
 import com.literandltx.betime.ui.shared.LabelIconTextButton
+import com.literandltx.betime.ui.shared.SelectableChip
 import com.literandltx.betime.ui.shared.TimerIconButton
 import com.literandltx.betime.ui.theme.TimerTheme
 import com.literandltx.betime.util.DEFAULT_INITIAL_TIME_SECONDS
@@ -332,54 +326,6 @@ fun TimersModalContent(
                 isSelected = timer.id == activeTimer?.id,
                 onClick = { onTimerSelected(timer) },
                 borderColor = null
-            )
-        }
-    }
-}
-
-@Composable
-fun SelectableChip(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    borderColor: Color? = null
-) {
-    val baseColor = borderColor ?: MaterialTheme.colorScheme.primary
-
-    val outlineColor = if (isSelected) baseColor else baseColor.copy(alpha = 0.5f)
-    val containerColor = if (isSelected) baseColor.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceContainer
-    val textColor = if (isSelected) baseColor else MaterialTheme.colorScheme.onSurface
-    val borderWidth = if (isSelected) 2.dp else 1.dp
-    val shape = RoundedCornerShape(8.dp)
-
-    Card(
-        onClick = onClick,
-        shape = shape,
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor,
-            contentColor = textColor
-        ),
-        border = CardDefaults.outlinedCardBorder().copy(
-            width = borderWidth,
-            brush = SolidColor(outlineColor)
-        ),
-        modifier = modifier.padding(horizontal = 4.dp, vertical = 0.dp)
-    ) {
-        Box(
-            modifier = Modifier.padding(
-                horizontal = 14.dp,
-                vertical = 12.dp
-            ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                color = textColor,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                ),
-                textAlign = TextAlign.Center
             )
         }
     }
