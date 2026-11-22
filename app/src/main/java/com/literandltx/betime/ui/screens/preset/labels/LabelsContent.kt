@@ -1,7 +1,5 @@
 package com.literandltx.betime.ui.screens.preset.labels
 
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -9,11 +7,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import com.literandltx.betime.data.model.Label
-import kotlinx.coroutines.delay
 import sh.calvin.reorderable.rememberReorderableLazyListState
-import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun LabelsContent(
@@ -41,33 +36,30 @@ fun LabelsContent(
     }
 
     val lazyListState = rememberLazyListState()
+    val hasAddHeader = if (isAdding) 1 else 0
+
     val reorderableLazyColumnState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        val offset = if (isAdding) 1 else 0
-        val fromIndex = from.index - offset
-        val toIndex = to.index - offset
+        val fromIndex = from.index - hasAddHeader
+        val toIndex = to.index - hasAddHeader
 
         if (fromIndex in list.indices && toIndex in list.indices) {
             list.add(toIndex, list.removeAt(fromIndex))
         }
     }
 
-    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
-    val offset = if (isAdding) 1 else 0
-
-    LaunchedEffect(isAdding, editingLabelId, imeBottom) {
-        val targetIndex = when {
-            isAdding -> 0
-            editingLabelId != null -> {
-                val itemIndex = list.indexOfFirst { it.id == editingLabelId }
-                if (itemIndex >= 0) itemIndex + offset else null
-            }
-            else -> null
+    LaunchedEffect(isAdding) {
+        if (isAdding && lazyListState.firstVisibleItemIndex > 0) {
+            lazyListState.scrollToItem(index = 0, scrollOffset = 0)
         }
+    }
 
-        if (targetIndex != null) {
-            delay(100.milliseconds)
-            lazyListState.animateScrollToItem(targetIndex)
-        }
+    LaunchedEffect(editingLabelId) {
+        if (isAdding || editingLabelId == null) return@LaunchedEffect
+
+        val labelIndex = list.indexOfFirst { it.id == editingLabelId }
+        if (labelIndex < 0) return@LaunchedEffect
+
+        lazyListState.animateScrollToItem(index = hasAddHeader + labelIndex)
     }
 
     LabelsList(
