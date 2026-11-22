@@ -7,9 +7,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocalOffer
@@ -34,6 +38,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -52,9 +57,11 @@ import com.literandltx.betime.ui.shared.ConfirmIconButton
 import com.literandltx.betime.ui.shared.EditableTextField
 import com.literandltx.betime.ui.theme.SmallElementShape
 import com.literandltx.betime.ui.theme.TimerTheme
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun EditorRecordCard(
@@ -82,9 +89,20 @@ fun EditorRecordCard(
     var selectedLabelId by remember(initialLabelId) { mutableStateOf(initialLabelId) }
 
     val focusRequester = remember { FocusRequester() }
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+        delay(100.milliseconds)
+        bringIntoViewRequester.bringIntoView()
+    }
+
+    LaunchedEffect(imeBottom) {
+        if (imeBottom > 0) {
+            delay(50.milliseconds)
+            bringIntoViewRequester.bringIntoView()
+        }
     }
 
     val submitForm = {
@@ -93,7 +111,9 @@ fun EditorRecordCard(
     }
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(bringIntoViewRequester),
         shape = shape,
         elevation = CardDefaults.cardElevation(
             defaultElevation = dimensionResource(R.dimen.card_elevation)

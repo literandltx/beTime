@@ -168,7 +168,6 @@ fun LogsScreenContent(
     val recordDeletedMessage = stringResource(R.string.recordDeletedMessage)
     val undoActionLabel = stringResource(R.string.undoAction)
 
-    // todo(fix): does not work properly on the last 4 items
     val imeBottomPx = WindowInsets.ime.getBottom(LocalDensity.current)
     val adjustedImeBottomPx = (imeBottomPx * 0.78f).toInt()
 

@@ -3,8 +3,11 @@ package com.literandltx.betime.ui.screens.preset
 import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -23,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -127,6 +131,9 @@ fun PresetContent(
     val labelDeletedMessage = stringResource(R.string.labelDeletedMessage)
     val undoActionLabel = stringResource(R.string.undoAction)
 
+    val imeBottomPx = WindowInsets.ime.getBottom(LocalDensity.current)
+    val adjustedImeBottomPx = (imeBottomPx * 0.78f).toInt()
+
     Scaffold(
         modifier = modifier
             .fillMaxSize()
@@ -147,11 +154,15 @@ fun PresetContent(
                 CustomSnackbar(snackbarData = data)
             }
         }
-    ) { innerPadding ->
+    ) { _ ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = innerPadding.calculateBottomPadding())
+                .windowInsetsPadding(
+                    WindowInsets(
+                        bottom = adjustedImeBottomPx
+                    )
+                )
                 .padding(
                     start = 12.dp,
                     end = 12.dp,
@@ -277,7 +288,6 @@ fun PresetContent(
         }
     }
 }
-
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

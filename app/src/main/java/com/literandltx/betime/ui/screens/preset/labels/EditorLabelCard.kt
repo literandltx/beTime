@@ -1,12 +1,17 @@
 package com.literandltx.betime.ui.screens.preset.labels
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocalOffer
 import androidx.compose.material3.Card
@@ -25,6 +30,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
@@ -34,7 +40,10 @@ import com.literandltx.betime.R
 import com.literandltx.betime.ui.shared.CloseIconButton
 import com.literandltx.betime.ui.shared.ConfirmIconButton
 import com.literandltx.betime.ui.shared.EditableTextField
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EditorLabelCard(
     initialName: String,
@@ -58,13 +67,26 @@ fun EditorLabelCard(
     }
 
     val focusRequester = remember { FocusRequester() }
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+        delay(100.milliseconds)
+        bringIntoViewRequester.bringIntoView()
+    }
+
+    LaunchedEffect(imeBottom) {
+        if (imeBottom > 0) {
+            delay(50.milliseconds)
+            bringIntoViewRequester.bringIntoView()
+        }
     }
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(bringIntoViewRequester),
         shape = shape,
         elevation = CardDefaults.cardElevation(
             defaultElevation = dimensionResource(R.dimen.card_elevation)
