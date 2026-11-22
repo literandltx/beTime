@@ -3,10 +3,7 @@ package com.literandltx.betime.ui.screens.logs
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,7 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.literandltx.betime.R
@@ -49,7 +45,6 @@ fun RecordsList(
 ) {
     val listState = rememberLazyListState()
     val hasAddHeader = if (isAdding) 1 else 0
-    val imeBottomPadding: Dp = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
 
     LaunchedEffect(isAdding) {
         if (isAdding && listState.firstVisibleItemIndex > 0) {
@@ -57,16 +52,13 @@ fun RecordsList(
         }
     }
 
-    LaunchedEffect(editingRecordId, imeBottomPadding) {
-        if (!isAdding && editingRecordId != null) {
-            val recordIndex = records.indexOfFirst { it.record.id == editingRecordId }
-            if (recordIndex >= 0) {
-                listState.animateScrollToItem(
-                    index = hasAddHeader + recordIndex,
-                    scrollOffset = 0
-                )
-            }
-        }
+    LaunchedEffect(editingRecordId) {
+        if (isAdding || editingRecordId == null) return@LaunchedEffect
+
+        val recordIndex = records.indexOfFirst { it.record.id == editingRecordId }
+        if (recordIndex < 0) return@LaunchedEffect
+
+        listState.animateScrollToItem(index = hasAddHeader + recordIndex)
     }
 
     LazyColumn(
@@ -76,7 +68,7 @@ fun RecordsList(
             start = contentPadding.calculateLeftPadding(LayoutDirection.Ltr),
             top = contentPadding.calculateTopPadding(),
             end = contentPadding.calculateRightPadding(LayoutDirection.Ltr),
-            bottom = contentPadding.calculateBottomPadding() + if (imeBottomPadding > 0.dp) 24.dp else 0.dp
+            bottom = contentPadding.calculateBottomPadding()
         ),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
