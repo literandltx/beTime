@@ -36,14 +36,30 @@ fun LabelsContent(
     }
 
     val lazyListState = rememberLazyListState()
+    val hasAddHeader = if (isAdding) 1 else 0
+
     val reorderableLazyColumnState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        val offset = if (isAdding) 1 else 0
-        val fromIndex = from.index - offset
-        val toIndex = to.index - offset
+        val fromIndex = from.index - hasAddHeader
+        val toIndex = to.index - hasAddHeader
 
         if (fromIndex in list.indices && toIndex in list.indices) {
             list.add(toIndex, list.removeAt(fromIndex))
         }
+    }
+
+    LaunchedEffect(isAdding) {
+        if (isAdding && lazyListState.firstVisibleItemIndex > 0) {
+            lazyListState.scrollToItem(index = 0, scrollOffset = 0)
+        }
+    }
+
+    LaunchedEffect(editingLabelId) {
+        if (isAdding || editingLabelId == null) return@LaunchedEffect
+
+        val labelIndex = list.indexOfFirst { it.id == editingLabelId }
+        if (labelIndex < 0) return@LaunchedEffect
+
+        lazyListState.animateScrollToItem(index = hasAddHeader + labelIndex)
     }
 
     LabelsList(

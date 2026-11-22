@@ -5,8 +5,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
@@ -29,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
@@ -160,6 +164,9 @@ fun LogsScreenContent(
     val recordDeletedMessage = stringResource(R.string.recordDeletedMessage)
     val undoActionLabel = stringResource(R.string.undoAction)
 
+    val imeBottomPx = WindowInsets.ime.getBottom(LocalDensity.current)
+    val adjustedImeBottomPx = (imeBottomPx * 0.78f).toInt()
+
     Scaffold(
         modifier = modifier
             .fillMaxSize()
@@ -189,11 +196,15 @@ fun LogsScreenContent(
                 }
             }
         }
-    ) { innerPadding ->
+    ) { _ ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = innerPadding.calculateBottomPadding())
+                .windowInsetsPadding(
+                    WindowInsets(
+                        bottom = adjustedImeBottomPx
+                    )
+                )
                 .padding(
                     start = 12.dp,
                     end = 12.dp,

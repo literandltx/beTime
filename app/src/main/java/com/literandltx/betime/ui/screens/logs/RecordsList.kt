@@ -7,15 +7,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.literandltx.betime.R
 import com.literandltx.betime.data.model.Label
@@ -40,9 +43,33 @@ fun RecordsList(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
+    val listState = rememberLazyListState()
+    val hasAddHeader = if (isAdding) 1 else 0
+
+    LaunchedEffect(isAdding) {
+        if (isAdding && listState.firstVisibleItemIndex > 0) {
+            listState.scrollToItem(index = 0, scrollOffset = 0)
+        }
+    }
+
+    LaunchedEffect(editingRecordId) {
+        if (isAdding || editingRecordId == null) return@LaunchedEffect
+
+        val recordIndex = records.indexOfFirst { it.record.id == editingRecordId }
+        if (recordIndex < 0) return@LaunchedEffect
+
+        listState.animateScrollToItem(index = hasAddHeader + recordIndex)
+    }
+
     LazyColumn(
+        state = listState,
         modifier = modifier,
-        contentPadding = contentPadding,
+        contentPadding = PaddingValues(
+            start = contentPadding.calculateLeftPadding(LayoutDirection.Ltr),
+            top = contentPadding.calculateTopPadding(),
+            end = contentPadding.calculateRightPadding(LayoutDirection.Ltr),
+            bottom = contentPadding.calculateBottomPadding()
+        ),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (isAdding) {
