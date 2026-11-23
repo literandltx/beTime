@@ -303,14 +303,12 @@ fun LabelsModalContent(
         horizontalArrangement = Arrangement.Center,
     ) {
         labels.forEach { label ->
-            if (!label.isUncertainOnly) {
-                SelectableChip(
-                    text = label.name,
-                    isSelected = label.id == activeLabel?.id,
-                    onClick = { onLabelSelected(label) },
-                    borderColor = Color(label.colorArgb)
-                )
-            }
+            SelectableChip(
+                text = label.name,
+                isSelected = label.id == activeLabel?.id,
+                onClick = { onLabelSelected(label) },
+                borderColor = Color(label.colorArgb)
+            )
         }
     }
 }

@@ -38,7 +38,7 @@ data class Label(
     val orderIndex: Int = 0,
 
     @ColumnInfo(name = "is_uncertain_only")
-    val isUncertainOnly: Boolean = false
+    val isUncertainOnly: Boolean = true
 ) {
     val composeColor: Color get() = Color(colorArgb)
 }
