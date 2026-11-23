@@ -7,9 +7,13 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.SubdirectoryArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -74,6 +78,17 @@ fun StatsListItem(
         modifier = modifier
             .padding(vertical = 2.dp)
     ) {
+        if (label?.parentId != null) {
+            Icon(
+                imageVector = Icons.Outlined.SubdirectoryArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .size(14.dp)
+                    .padding(end = 2.dp)
+            )
+        }
+
         LabelIcon(color = label?.composeColor)
 
         Spacer(modifier = Modifier.width(6.dp))

@@ -1,9 +1,17 @@
 package com.literandltx.betime.ui.screens.activity.widgets.donut
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.outlined.FormatListBulleted
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -14,9 +22,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.literandltx.betime.R
 import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.ui.screens.activity.shared.HeaderPreviewProvider
 import com.literandltx.betime.ui.screens.activity.shared.HeaderPreviewState
@@ -34,6 +44,8 @@ fun DonutHeader(
     labels: List<Label>,
     selectedTimeSpan: TimeSpan,
     selectedLabels: Set<Label>,
+    groupSubLabels: Boolean,
+    onToggleGroupSubLabels: () -> Unit,
     onPrevClick: () -> Unit,
     onNextClick: () -> Unit,
     onRangeClick: () -> Unit,
@@ -44,6 +56,8 @@ fun DonutHeader(
     isPrevEnabled: Boolean = true,
     isNextEnabled: Boolean = true
 ) {
+    val hasSubLabels = remember(labels) { labels.any { it.parentId != null } }
+
     Box(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
@@ -63,20 +77,52 @@ fun DonutHeader(
             modifier = Modifier.align(Alignment.Center)
         )
 
-        LabelSelector(
-            labels = labels,
-            selectedLabels = selectedLabels,
-            onLabelsChanged = onLabelsChanged,
+        Row(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = 40.dp)
-        )
+                .padding(end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            if (hasSubLabels) {
+                IconButton(
+                    onClick = onToggleGroupSubLabels,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = if (groupSubLabels) {
+                            Icons.Outlined.AccountTree
+                        } else {
+                            Icons.Outlined.FormatListBulleted
+                        },
+                        contentDescription = stringResource(
+                            if (groupSubLabels) {
+                                R.string.detailedSubLabelsMode
+                            } else {
+                                R.string.groupedSubLabelsMode
+                            }
+                        ),
+                        tint = if (groupSubLabels) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
 
-        NextIconButton(
-            onClick = onNextClick,
-            isEnabled = isNextEnabled,
-            modifier = Modifier.align(Alignment.CenterEnd)
-        )
+            LabelSelector(
+                labels = labels,
+                selectedLabels = selectedLabels,
+                onLabelsChanged = onLabelsChanged
+            )
+
+            NextIconButton(
+                onClick = onNextClick,
+                isEnabled = isNextEnabled
+            )
+        }
     }
 }
 
@@ -92,7 +138,8 @@ private fun LabelSelector(
     Box(modifier = modifier) {
         LabelIconButton(
             label = if (selectedLabels.size == 1) selectedLabels.first() else null,
-            onClick = { isModalOpen = true }
+            onClick = { isModalOpen = true },
+            modifier = Modifier.size(36.dp)
         )
 
         LabelSelectorModal(
@@ -125,6 +172,8 @@ fun HeaderPreview(
                     timeOffset = 0,
                     labels = listOf(),
                     selectedLabels = setOf(),
+                    groupSubLabels = false,
+                    onToggleGroupSubLabels = { },
                     onPrevClick = { },
                     onNextClick = { },
                     onRangeClick = { },

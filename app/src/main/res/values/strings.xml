@@ -19,6 +19,8 @@
     <string name="addSubLabelAction">Add sub-label</string>
     <string name="hideSubLabelsAction">Hide sub-labels</string>
     <string name="showSubLabelsAction">Show sub-labels</string>
+    <string name="groupedSubLabelsMode">Group sub-labels under parent</string>
+    <string name="detailedSubLabelsMode">Show detailed sub-labels</string>
     <string name="exportCSVAction">Export CSV</string>
     <string name="importCSVAction">Import CSV</string>
 

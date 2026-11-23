@@ -35,7 +35,6 @@ import com.literandltx.betime.ui.screens.activity.shared.WidgetContainer
 import com.literandltx.betime.ui.screens.activity.shared.CustomDateRangePickerDialog
 import com.literandltx.betime.ui.screens.activity.shared.HeaderPreviewProvider
 import com.literandltx.betime.ui.screens.activity.shared.HeaderPreviewState
-import com.literandltx.betime.ui.screens.activity.shared.LabelSelectorModal
 import com.literandltx.betime.ui.screens.activity.shared.TimeSelectorModal
 import com.literandltx.betime.ui.screens.activity.shared.TimeSpan
 import com.literandltx.betime.ui.screens.activity.shared.getFilteredRecords
@@ -50,6 +49,7 @@ fun DonutContainer(
     modifier: Modifier = Modifier,
     initialShowPercentage: Boolean = false,
     initialTimeSpan: TimeSpan = TimeSpan.DAY,
+    initialGroupSubLabels: Boolean = false,
     isEditing: Boolean = false,
     canMoveUp: Boolean = true,
     canMoveDown: Boolean = true,
@@ -59,10 +59,10 @@ fun DonutContainer(
 ) {
     var showTimeSelectorModal by remember { mutableStateOf(false) }
     var showCustomRangePicker by remember { mutableStateOf(false) }
-    var showLabelSelectorModal by remember { mutableStateOf(false) }
 
     var selectedTimeSpan by remember { mutableStateOf(initialTimeSpan) }
     var selectedLabels by remember(labels) { mutableStateOf(labels.toSet()) }
+    var groupSubLabels by remember { mutableStateOf(initialGroupSubLabels) }
 
     var timeOffset by remember { mutableIntStateOf(0) }
     var customStartDate by remember { mutableLongStateOf(0L) }
@@ -76,8 +76,13 @@ fun DonutContainer(
         getLabelStatisticMap(timeFilteredRecords)
     }
 
-    val fullyFilteredStats = remember(statsMap, selectedLabels) {
-        statsMap.filterKeys { it == null || selectedLabels.contains(it) }
+    val fullyFilteredStats = remember(statsMap, selectedLabels, labels, groupSubLabels) {
+        val labelFiltered = statsMap.filterKeys { it == null || selectedLabels.contains(it) }
+        if (groupSubLabels) {
+            aggregateSubLabels(labelFiltered, labels)
+        } else {
+            labelFiltered
+        }
     }
 
     TimeSelectorModal(
@@ -130,6 +135,8 @@ fun DonutContainer(
                 timeOffset = timeOffset,
                 labels = labels,
                 selectedLabels = selectedLabels,
+                groupSubLabels = groupSubLabels,
+                onToggleGroupSubLabels = { groupSubLabels = !groupSubLabels },
                 onPrevClick = { timeOffset -= 1 },
                 onNextClick = { timeOffset += 1 },
                 onRangeClick = { showTimeSelectorModal = true },
@@ -149,6 +156,26 @@ fun DonutContainer(
             )
         }
     }
+}
+
+private fun aggregateSubLabels(
+    stats: Map<Label?, Int>,
+    allLabels: List<Label>
+): Map<Label?, Int> {
+    val labelsById = allLabels.associateBy { it.id } +
+            stats.keys.filterNotNull().associateBy { it.id }
+
+    val aggregated = mutableMapOf<Label?, Int>()
+    for ((label, duration) in stats) {
+        val parentId = label?.parentId
+        val targetLabel = if (parentId != null) {
+            labelsById[parentId] ?: label
+        } else {
+            label
+        }
+        aggregated[targetLabel] = (aggregated[targetLabel] ?: 0) + duration
+    }
+    return aggregated
 }
 
 @Composable
