@@ -7,6 +7,10 @@ interface LabelsRepository {
 
     fun getAllLabelsStream(): Flow<List<Label>>
 
+    fun getRootLabelsStream(): Flow<List<Label>>
+
+    fun getSubLabelsStream(parentId: Int): Flow<List<Label>>
+
     fun getLabelStream(id: Int): Flow<Label?>
 
     suspend fun insertLabel(label: Label)

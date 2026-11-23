@@ -31,9 +31,10 @@ fun LabelsList(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(bottom = 16.dp)
     ) {
-        if (state.isAdding) {
+        if (state.isAdding && state.addingParentId == null) {
             item(key = "add_label_form") {
                 AddLabelItem(
+                    parentId = null,
                     onConfirm = actions.onConfirmAdd,
                     onCancel = actions.onCancelAdd
                 )
@@ -55,11 +56,13 @@ fun LabelsList(
                     EditorLabelCard(
                         initialName = label.name,
                         initialColor = label.composeColor,
-                        onConfirm = { updatedName, updatedColor ->
+                        parentId = label.parentId,
+                        onConfirm = { updatedName, updatedColor, updatedParentId ->
                             actions.onConfirmEdit(
                                 label.copy(
                                     name = updatedName,
-                                    colorArgb = updatedColor.toArgb()
+                                    colorArgb = updatedColor.toArgb(),
+                                    parentId = updatedParentId
                                 )
                             )
                         },
@@ -73,6 +76,7 @@ fun LabelsList(
                             dragModifier = Modifier.draggableHandle(
                                 onDragStopped = { actions.onReorderFinished(state.list.toList()) }
                             ),
+                            onAddSubLabelClick = { actions.onStartAddSubLabel(label.id) },
                             onEditClick = { actions.onStartEdit(label) },
                             onDeleteClick = { actions.onDeleteClick(label) },
                             onToggleClick = { actions.onToggleClick(label) }
@@ -80,19 +84,30 @@ fun LabelsList(
                     }
                 }
             }
+
+            if (state.isAdding && state.addingParentId == label.id) {
+                AddLabelItem(
+                    parentId = label.id,
+                    onConfirm = actions.onConfirmAdd,
+                    onCancel = actions.onCancelAdd,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun AddLabelItem(
-    onConfirm: (name: String, color: Color) -> Unit,
+    parentId: Int?,
+    onConfirm: (name: String, color: Color, parentId: Int?) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     EditorLabelCard(
         initialName = "",
         initialColor = PRESET_LABEL_COLORS.first(),
+        parentId = parentId,
         placeholder = stringResource(R.string.newLabelPlaceholder),
         onConfirm = onConfirm,
         onCancel = onCancel,

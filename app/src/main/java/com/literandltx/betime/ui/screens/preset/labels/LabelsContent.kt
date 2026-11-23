@@ -15,9 +15,11 @@ fun LabelsContent(
     labels: List<Label>,
     activeLabelId: Int?,
     isAdding: Boolean,
+    addingParentId: Int?,
     editingLabelId: Int?,
-    onConfirmAdd: (name: String, color: Color) -> Unit,
+    onConfirmAdd: (name: String, color: Color, parentId: Int?) -> Unit,
     onCancelAdd: () -> Unit,
+    onStartAddSubLabel: (parentId: Int) -> Unit,
     onStartEdit: (Label) -> Unit,
     onConfirmEdit: (Label) -> Unit,
     onCancelEdit: () -> Unit,
@@ -26,29 +28,48 @@ fun LabelsContent(
     onDeleteClick: (Label) -> Unit = {},
     onToggleClick: (Label) -> Unit = {}
 ) {
-    val list = remember(labels) { labels.toMutableStateList() }
+    val orderedHierarchy = remember(labels) {
+        val roots = labels.filter { it.parentId == null }.sortedBy { it.orderIndex }
+        val subsByParent = labels
+            .filter { it.parentId != null }
+            .sortedBy { it.orderIndex }
+            .groupBy { it.parentId }
 
-    LaunchedEffect(labels) {
-        if (list != labels) {
+        buildList {
+            roots.forEach { root ->
+                add(root)
+                addAll(subsByParent[root.id].orEmpty())
+            }
+        }
+    }
+
+    val list = remember(orderedHierarchy) { orderedHierarchy.toMutableStateList() }
+
+    LaunchedEffect(orderedHierarchy) {
+        if (list != orderedHierarchy) {
             list.clear()
-            list.addAll(labels)
+            list.addAll(orderedHierarchy)
         }
     }
 
     val lazyListState = rememberLazyListState()
-    val hasAddHeader = if (isAdding) 1 else 0
+    val hasTopAddHeader = if (isAdding && addingParentId == null) 1 else 0
 
     val reorderableLazyColumnState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        val fromIndex = from.index - hasAddHeader
-        val toIndex = to.index - hasAddHeader
+        val fromIndex = from.index - hasTopAddHeader
+        val toIndex = to.index - hasTopAddHeader
 
         if (fromIndex in list.indices && toIndex in list.indices) {
-            list.add(toIndex, list.removeAt(fromIndex))
+            val movingItem = list[fromIndex]
+            val targetItem = list[toIndex]
+            if (movingItem.parentId == targetItem.parentId) {
+                list.add(toIndex, list.removeAt(fromIndex))
+            }
         }
     }
 
-    LaunchedEffect(isAdding) {
-        if (isAdding && lazyListState.firstVisibleItemIndex > 0) {
+    LaunchedEffect(isAdding, addingParentId) {
+        if (isAdding && addingParentId == null && lazyListState.firstVisibleItemIndex > 0) {
             lazyListState.scrollToItem(index = 0, scrollOffset = 0)
         }
     }
@@ -59,7 +80,7 @@ fun LabelsContent(
         val labelIndex = list.indexOfFirst { it.id == editingLabelId }
         if (labelIndex < 0) return@LaunchedEffect
 
-        lazyListState.animateScrollToItem(index = hasAddHeader + labelIndex)
+        lazyListState.animateScrollToItem(index = hasTopAddHeader + labelIndex)
     }
 
     LabelsList(
@@ -67,6 +88,7 @@ fun LabelsContent(
             list = list,
             activeLabelId = activeLabelId,
             isAdding = isAdding,
+            addingParentId = addingParentId,
             editingLabelId = editingLabelId,
             lazyListState = lazyListState,
             reorderableLazyColumnState = reorderableLazyColumnState
@@ -74,6 +96,7 @@ fun LabelsContent(
         actions = LabelsListActions(
             onConfirmAdd = onConfirmAdd,
             onCancelAdd = onCancelAdd,
+            onStartAddSubLabel = onStartAddSubLabel,
             onStartEdit = onStartEdit,
             onConfirmEdit = onConfirmEdit,
             onCancelEdit = onCancelEdit,

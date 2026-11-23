@@ -16,6 +16,7 @@
     <string name="confirmAction">Confirm</string>
     <string name="cancelAction">Cancel</string>
     <string name="undoAction">Undo</string>
+    <string name="addSubLabelAction">Add sub-label</string>
     <string name="exportCSVAction">Export CSV</string>
     <string name="importCSVAction">Import CSV</string>
 

@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
         ActivePreset::class,
         TimerRecord::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class InventoryDatabase : RoomDatabase() {

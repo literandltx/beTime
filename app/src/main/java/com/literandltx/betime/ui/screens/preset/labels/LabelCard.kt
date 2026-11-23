@@ -6,8 +6,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.SubdirectoryArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,13 +40,18 @@ fun LabelCard(
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.large,
     dragModifier: Modifier = Modifier,
+    onAddSubLabelClick: (() -> Unit)? = null,
     onEditClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
     onToggleClick: () -> Unit = {}
 ) {
+    val isSubLabel = label.parentId != null
+
     Card(
         onClick = onToggleClick,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = if (isSubLabel) 24.dp else 0.dp),
         shape = shape,
         elevation = CardDefaults.cardElevation(
             defaultElevation = dimensionResource(R.dimen.card_elevation)
@@ -55,7 +65,11 @@ fun LabelCard(
             }
         ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            containerColor = if (isSubLabel) {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            } else {
+                MaterialTheme.colorScheme.surfaceContainer
+            },
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
@@ -64,10 +78,23 @@ fun LabelCard(
                 .fillMaxWidth()
                 .padding(
                     horizontal = dimensionResource(R.dimen.padding_content_horizontal),
-                    vertical = dimensionResource(R.dimen.padding_large)
+                    vertical = if (isSubLabel) {
+                        dimensionResource(R.dimen.padding_standard)
+                    } else {
+                        dimensionResource(R.dimen.padding_large)
+                    }
                 ),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (isSubLabel) {
+                Icon(
+                    imageVector = Icons.Outlined.SubdirectoryArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+            }
             ReorderHandle(modifier = dragModifier)
             LabelIcon(
                 color = label.composeColor,
@@ -77,12 +104,17 @@ fun LabelCard(
             )
             Text(
                 text = label.name,
-                style = MaterialTheme.typography.bodyLarge
+                style = if (isSubLabel) {
+                    MaterialTheme.typography.bodyMedium
+                } else {
+                    MaterialTheme.typography.bodyLarge
+                }
             )
             Spacer(modifier = Modifier.weight(1f))
             OptionsMenu(
                 onEditClick = onEditClick,
-                onDeleteClick = onDeleteClick
+                onDeleteClick = onDeleteClick,
+                onAddSubLabelClick = if (!isSubLabel) onAddSubLabelClick else null
             )
         }
     }

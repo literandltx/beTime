@@ -48,9 +48,10 @@ import kotlin.time.Duration.Companion.milliseconds
 fun EditorLabelCard(
     initialName: String,
     initialColor: Color,
-    onConfirm: (name: String, color: Color) -> Unit,
+    onConfirm: (name: String, color: Color, parentId: Int?) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
+    parentId: Int? = null,
     placeholder: String = stringResource(R.string.newLabelPlaceholder),
     shape: Shape = MaterialTheme.shapes.large
 ) {
@@ -86,6 +87,7 @@ fun EditorLabelCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .padding(start = if (parentId != null) 24.dp else 0.dp)
             .bringIntoViewRequester(bringIntoViewRequester),
         shape = shape,
         elevation = CardDefaults.cardElevation(
@@ -117,13 +119,13 @@ fun EditorLabelCard(
                     onValueChange = { textFieldValue = it },
                     placeholder = placeholder,
                     cursorColor = selectedColor,
-                    onConfirm = { onConfirm(textFieldValue.text.trim(), selectedColor) },
+                    onConfirm = { onConfirm(textFieldValue.text.trim(), selectedColor, parentId) },
                     modifier = Modifier
                         .weight(1f)
                         .focusRequester(focusRequester)
                 )
                 ConfirmIconButton(
-                    onClick = { onConfirm(textFieldValue.text.trim(), selectedColor) },
+                    onClick = { onConfirm(textFieldValue.text.trim(), selectedColor, parentId) },
                     isEnabled = textFieldValue.text.isNotBlank(),
                     contentDescription = stringResource(R.string.confirmAction)
                 )

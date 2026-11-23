@@ -9,14 +9,16 @@ data class LabelsListState(
     val list: List<Label>,
     val activeLabelId: Int?,
     val isAdding: Boolean,
+    val addingParentId: Int?,
     val editingLabelId: Int?,
     val lazyListState: LazyListState,
     val reorderableLazyColumnState: ReorderableLazyListState
 )
 
 data class LabelsListActions(
-    val onConfirmAdd: (name: String, color: Color) -> Unit,
+    val onConfirmAdd: (name: String, color: Color, parentId: Int?) -> Unit,
     val onCancelAdd: () -> Unit,
+    val onStartAddSubLabel: (parentId: Int) -> Unit,
     val onStartEdit: (Label) -> Unit,
     val onConfirmEdit: (Label) -> Unit,
     val onCancelEdit: () -> Unit,

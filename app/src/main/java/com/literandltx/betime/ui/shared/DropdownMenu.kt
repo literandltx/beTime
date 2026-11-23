@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.SubdirectoryArrowRight
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -22,7 +23,8 @@ import com.literandltx.betime.R
 fun OptionsMenu(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAddSubLabelClick: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -36,6 +38,16 @@ fun OptionsMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
+            if (onAddSubLabelClick != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.addSubLabelAction)) },
+                    onClick = {
+                        expanded = false
+                        onAddSubLabelClick()
+                    },
+                    leadingIcon = { DropdownMenuIcon(imageVector = Icons.Outlined.SubdirectoryArrowRight) }
+                )
+            }
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.editAction)) },
                 onClick = {
