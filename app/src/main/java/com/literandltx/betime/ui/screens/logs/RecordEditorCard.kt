@@ -101,10 +101,7 @@ fun EditorRecordCard(
     }
     val isUncertainSelected = selectedLabel?.isUncertainOnly == true
 
-    var hasDate by remember(initialStartTimestamp, isUncertainSelected) {
-        mutableStateOf(!isUncertainSelected || initialStartTimestamp > UNSPECIFIED_TIMESTAMP)
-    }
-    var hasTime by remember(initialStartTimestamp, isUncertainSelected) {
+    var hasDateTime by remember(initialStartTimestamp, isUncertainSelected) {
         mutableStateOf(!isUncertainSelected || initialStartTimestamp > UNSPECIFIED_TIMESTAMP)
     }
 
@@ -113,8 +110,7 @@ fun EditorRecordCard(
             if (selectedTimestamp <= UNSPECIFIED_TIMESTAMP) {
                 selectedTimestamp = System.currentTimeMillis()
             }
-            hasDate = true
-            hasTime = true
+            hasDateTime = true
         }
     }
 
@@ -141,33 +137,14 @@ fun EditorRecordCard(
     val submitForm = {
         val durationSeconds = minsValue.coerceAtLeast(0) * 60
         if (isUncertainSelected || minsValue > 0) {
-            val finalTimestamp = if (!isUncertainSelected) {
-                if (selectedTimestamp > UNSPECIFIED_TIMESTAMP) selectedTimestamp else System.currentTimeMillis()
-            } else if (!hasDate && !hasTime) {
-                UNSPECIFIED_TIMESTAMP
-            } else {
-                val base = if (selectedTimestamp > UNSPECIFIED_TIMESTAMP) {
-                    selectedTimestamp
-                } else {
-                    System.currentTimeMillis()
+            val finalTimestamp = when {
+                !isUncertainSelected -> {
+                    if (selectedTimestamp > UNSPECIFIED_TIMESTAMP) selectedTimestamp else System.currentTimeMillis()
                 }
-                Calendar.getInstance().apply {
-                    timeInMillis = base
-                    if (!hasDate) {
-                        val now = Calendar.getInstance()
-                        set(Calendar.YEAR, now.get(Calendar.YEAR))
-                        set(Calendar.MONTH, now.get(Calendar.MONTH))
-                        set(Calendar.DAY_OF_MONTH, now.get(Calendar.DAY_OF_MONTH))
-                    }
-                    if (!hasTime) {
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }
-                }.timeInMillis
+                !hasDateTime -> UNSPECIFIED_TIMESTAMP
+                selectedTimestamp > UNSPECIFIED_TIMESTAMP -> selectedTimestamp
+                else -> System.currentTimeMillis()
             }
-
             onConfirm(durationSeconds, finalTimestamp, selectedLabelId)
         }
     }
@@ -211,16 +188,13 @@ fun EditorRecordCard(
                 EditorDateTimePicker(
                     selectedTimestamp = selectedTimestamp,
                     isUncertain = isUncertainSelected,
-                    hasDate = hasDate,
-                    hasTime = hasTime,
-                    onDateTimeChanged = { newTs, newHasDate, newHasTime ->
+                    hasDateTime = hasDateTime,
+                    onDateTimeSelected = { newTs ->
                         selectedTimestamp = newTs
-                        hasDate = newHasDate
-                        hasTime = newHasTime
+                        hasDateTime = true
                     },
                     onClearDateTime = {
-                        hasDate = false
-                        hasTime = false
+                        hasDateTime = false
                         selectedTimestamp = UNSPECIFIED_TIMESTAMP
                     },
                     modifier = Modifier.weight(1f)
@@ -292,17 +266,14 @@ private fun EditorDurationInput(
 fun EditorDateTimePicker(
     selectedTimestamp: Long,
     isUncertain: Boolean,
-    hasDate: Boolean,
-    hasTime: Boolean,
-    onDateTimeChanged: (timestamp: Long, hasDate: Boolean, hasTime: Boolean) -> Unit,
+    hasDateTime: Boolean,
+    onDateTimeSelected: (Long) -> Unit,
     onClearDateTime: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val locale = LocalLocale.current
-    val dateFormatter = remember(locale) { SimpleDateFormat("MMM d, yyyy", locale.platformLocale) }
-    val timeFormatter = remember(locale) { SimpleDateFormat("h:mm:ss a", locale.platformLocale) }
-    val fullFormatter = remember(locale) { SimpleDateFormat("MMM d, yyyy, h:mm:ss a", locale.platformLocale) }
+    val sdf = remember(locale) { SimpleDateFormat("MMM d, yyyy, h:mm:ss a", locale.platformLocale) }
 
     val baseMillis = if (selectedTimestamp > UNSPECIFIED_TIMESTAMP) {
         selectedTimestamp
@@ -310,47 +281,9 @@ fun EditorDateTimePicker(
         System.currentTimeMillis()
     }
 
-    fun openDatePicker() {
+    fun openPicker() {
         val calendar = Calendar.getInstance().apply { timeInMillis = baseMillis }
-        DatePickerDialog(
-            context,
-            { _, year, month, dayOfMonth ->
-                calendar.set(Calendar.YEAR, year)
-                calendar.set(Calendar.MONTH, month)
-                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-                if (!hasTime) {
-                    calendar.set(Calendar.HOUR_OF_DAY, 0)
-                    calendar.set(Calendar.MINUTE, 0)
-                    calendar.set(Calendar.SECOND, 0)
-                    calendar.set(Calendar.MILLISECOND, 0)
-                }
-                onDateTimeChanged(calendar.timeInMillis, true, hasTime)
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        ).show()
-    }
 
-    fun openTimePicker() {
-        val calendar = Calendar.getInstance().apply { timeInMillis = baseMillis }
-        TimePickerDialog(
-            context,
-            { _, hourOfDay, minute ->
-                calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
-                calendar.set(Calendar.MINUTE, minute)
-                calendar.set(Calendar.SECOND, 0)
-                calendar.set(Calendar.MILLISECOND, 0)
-                onDateTimeChanged(calendar.timeInMillis, hasDate, true)
-            },
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE),
-            false
-        ).show()
-    }
-
-    fun openFullPicker() {
-        val calendar = Calendar.getInstance().apply { timeInMillis = baseMillis }
         DatePickerDialog(
             context,
             { _, year, month, dayOfMonth ->
@@ -363,7 +296,7 @@ fun EditorDateTimePicker(
                     { _, hourOfDay, minute ->
                         calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
                         calendar.set(Calendar.MINUTE, minute)
-                        onDateTimeChanged(calendar.timeInMillis, true, true)
+                        onDateTimeSelected(calendar.timeInMillis)
                     },
                     calendar.get(Calendar.HOUR_OF_DAY),
                     calendar.get(Calendar.MINUTE),
@@ -376,60 +309,43 @@ fun EditorDateTimePicker(
         ).show()
     }
 
-    if (!isUncertain) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val labelText = when {
+            !isUncertain -> sdf.format(Date(baseMillis))
+            hasDateTime -> sdf.format(Date(baseMillis))
+            else -> "No date / time"
+        }
+
+        val textColor = when {
+            !isUncertain -> MaterialTheme.colorScheme.primary
+            hasDateTime -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        }
+
         Text(
-            text = fullFormatter.format(Date(baseMillis)),
+            text = labelText,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = modifier
+            color = textColor,
+            modifier = Modifier
                 .clip(SmallElementShape)
-                .clickable { openFullPicker() }
+                .clickable { openPicker() }
                 .padding(vertical = 4.dp, horizontal = 8.dp)
         )
-    } else {
-        Row(
-            modifier = modifier,
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = if (hasDate) dateFormatter.format(Date(baseMillis)) else "No date",
-                style = MaterialTheme.typography.labelMedium,
-                color = if (hasDate) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .clip(SmallElementShape)
-                    .clickable { openDatePicker() }
-                    .padding(vertical = 4.dp, horizontal = 6.dp)
-            )
 
-            Text(
-                text = "·",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Text(
-                text = if (hasTime) timeFormatter.format(Date(baseMillis)) else "No time",
-                style = MaterialTheme.typography.labelMedium,
-                color = if (hasTime) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .clip(SmallElementShape)
-                    .clickable { openTimePicker() }
-                    .padding(vertical = 4.dp, horizontal = 6.dp)
-            )
-
-            if (hasDate || hasTime) {
-                IconButton(
-                    onClick = onClearDateTime,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Clear,
-                        contentDescription = "Clear date and time",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+        if (isUncertain && hasDateTime) {
+            IconButton(
+                onClick = onClearDateTime,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Clear,
+                    contentDescription = "Clear date and time",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
     }
