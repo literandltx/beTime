@@ -135,8 +135,14 @@ private fun FormattedTimerText(
 ) {
     val locale = LocalLocale.current
 
-    val sdf = remember(locale) { SimpleDateFormat("MMM d, yyyy, h:mm:ss a", locale.platformLocale) }
-    val formattedTime = remember(startTimestamp, locale) { sdf.format(Date(startTimestamp)) }
+    val formattedTime = remember(startTimestamp, locale) {
+        if (startTimestamp <= 0L) {
+            "No date / time"
+        } else {
+            val sdf = SimpleDateFormat("MMM d, yyyy, h:mm:ss a", locale.platformLocale)
+            sdf.format(Date(startTimestamp))
+        }
+    }
 
     Text(
         text = formattedTime,
@@ -191,7 +197,7 @@ private fun RecordCardNoLabelPreview(
         record = TimerRecord(
             id = 2,
             value = 1115,
-            startTimestamp = System.currentTimeMillis() - 3600000L,
+            startTimestamp = 0L,
             labelId = null
         ),
         label = null

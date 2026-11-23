@@ -86,9 +86,11 @@ fun HomeScreen(
                 Lifecycle.Event.ON_STOP -> {
                     homeViewModel.onAppBackgrounded()
                 }
+
                 Lifecycle.Event.ON_START -> {
                     homeViewModel.onAppForegrounded()
                 }
+
                 else -> {}
             }
         }
@@ -270,6 +272,7 @@ private fun HomeModalsProcess(
                 )
             }
         }
+
         ModalType.TIMERS -> {
             GenericModal(
                 isVisible = true,
@@ -283,6 +286,7 @@ private fun HomeModalsProcess(
                 )
             }
         }
+
         ModalType.NONE -> {}
     }
 }
@@ -299,12 +303,14 @@ fun LabelsModalContent(
         horizontalArrangement = Arrangement.Center,
     ) {
         labels.forEach { label ->
-            SelectableChip(
-                text = label.name,
-                isSelected = label.id == activeLabel?.id,
-                onClick = { onLabelSelected(label) },
-                borderColor = Color(label.colorArgb)
-            )
+            if (!label.isUncertainOnly) {
+                SelectableChip(
+                    text = label.name,
+                    isSelected = label.id == activeLabel?.id,
+                    onClick = { onLabelSelected(label) },
+                    borderColor = Color(label.colorArgb)
+                )
+            }
         }
     }
 }

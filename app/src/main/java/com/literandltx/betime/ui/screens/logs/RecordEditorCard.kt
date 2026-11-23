@@ -16,18 +16,21 @@ import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.LocalOffer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -63,6 +66,8 @@ import java.util.Calendar
 import java.util.Date
 import kotlin.time.Duration.Companion.milliseconds
 
+private const val UNSPECIFIED_TIMESTAMP = 0L
+
 @Composable
 fun EditorRecordCard(
     initialValueSeconds: Int,
@@ -72,7 +77,6 @@ fun EditorRecordCard(
     onConfirm: (durationSeconds: Int, startTimestamp: Long, labelId: Int?) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = stringResource(R.string.durationPlaceholder),
     shape: Shape = MaterialTheme.shapes.large
 ) {
     var textFieldValue by remember(initialValueSeconds) {
@@ -85,8 +89,33 @@ fun EditorRecordCard(
         )
     }
 
-    var selectedTimestamp by remember(initialStartTimestamp) { mutableStateOf(initialStartTimestamp) }
-    var selectedLabelId by remember(initialLabelId) { mutableStateOf(initialLabelId) }
+    var selectedTimestamp by remember(initialStartTimestamp) {
+        mutableLongStateOf(initialStartTimestamp)
+    }
+    var selectedLabelId by remember(initialLabelId) {
+        mutableStateOf(initialLabelId)
+    }
+
+    val selectedLabel = remember(labels, selectedLabelId) {
+        labels.find { it.id == selectedLabelId }
+    }
+    val isUncertainSelected = selectedLabel?.isUncertainOnly == true
+
+    var hasDateTime by remember(initialStartTimestamp, isUncertainSelected) {
+        mutableStateOf(!isUncertainSelected || initialStartTimestamp > UNSPECIFIED_TIMESTAMP)
+    }
+
+    LaunchedEffect(isUncertainSelected) {
+        if (!isUncertainSelected) {
+            if (selectedTimestamp <= UNSPECIFIED_TIMESTAMP) {
+                selectedTimestamp = System.currentTimeMillis()
+            }
+            hasDateTime = true
+        }
+    }
+
+    val minsValue = textFieldValue.text.toIntOrNull() ?: 0
+    val isConfirmEnabled = if (isUncertainSelected) true else minsValue > 0
 
     val focusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -106,9 +135,21 @@ fun EditorRecordCard(
     }
 
     val submitForm = {
-        val mins = textFieldValue.text.toIntOrNull() ?: 0
-        if (mins > 0) onConfirm(mins * 60, selectedTimestamp, selectedLabelId)
+        val durationSeconds = minsValue.coerceAtLeast(0) * 60
+        if (isUncertainSelected || minsValue > 0) {
+            val finalTimestamp = when {
+                !isUncertainSelected -> {
+                    if (selectedTimestamp > UNSPECIFIED_TIMESTAMP) selectedTimestamp else System.currentTimeMillis()
+                }
+                !hasDateTime -> UNSPECIFIED_TIMESTAMP
+                selectedTimestamp > UNSPECIFIED_TIMESTAMP -> selectedTimestamp
+                else -> System.currentTimeMillis()
+            }
+            onConfirm(durationSeconds, finalTimestamp, selectedLabelId)
+        }
     }
+
+    val placeholder = if (isUncertainSelected) stringResource(R.string.durationOptionalPlaceholder) else stringResource(R.string.durationPlaceholder)
 
     Card(
         modifier = modifier
@@ -133,6 +174,7 @@ fun EditorRecordCard(
                 textFieldValue = textFieldValue,
                 onValueChange = { textFieldValue = it },
                 placeholder = placeholder,
+                isConfirmEnabled = isConfirmEnabled,
                 focusRequester = focusRequester,
                 onConfirm = submitForm,
                 onCancel = onCancel
@@ -145,7 +187,17 @@ fun EditorRecordCard(
             ) {
                 EditorDateTimePicker(
                     selectedTimestamp = selectedTimestamp,
-                    onTimestampSelected = { selectedTimestamp = it }
+                    isUncertain = isUncertainSelected,
+                    hasDateTime = hasDateTime,
+                    onDateTimeSelected = { newTs ->
+                        selectedTimestamp = newTs
+                        hasDateTime = true
+                    },
+                    onClearDateTime = {
+                        hasDateTime = false
+                        selectedTimestamp = UNSPECIFIED_TIMESTAMP
+                    },
+                    modifier = Modifier.weight(1f)
                 )
 
                 EditorLabelPicker(
@@ -163,6 +215,7 @@ private fun EditorDurationInput(
     textFieldValue: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
     placeholder: String,
+    isConfirmEnabled: Boolean,
     focusRequester: FocusRequester,
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
@@ -198,7 +251,7 @@ private fun EditorDurationInput(
 
         ConfirmIconButton(
             onClick = onConfirm,
-            isEnabled = (textFieldValue.text.toLongOrNull() ?: 0L) > 0,
+            isEnabled = isConfirmEnabled,
             contentDescription = stringResource(R.string.confirmAction)
         )
 
@@ -212,15 +265,24 @@ private fun EditorDurationInput(
 @Composable
 fun EditorDateTimePicker(
     selectedTimestamp: Long,
-    onTimestampSelected: (Long) -> Unit,
+    isUncertain: Boolean,
+    hasDateTime: Boolean,
+    onDateTimeSelected: (Long) -> Unit,
+    onClearDateTime: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val locale = LocalLocale.current
-    val sdf = remember { SimpleDateFormat("MMM d, yyyy, h:mm:ss a", locale.platformLocale) }
+    val sdf = remember(locale) { SimpleDateFormat("MMM d, yyyy, h:mm:ss a", locale.platformLocale) }
+
+    val baseMillis = if (selectedTimestamp > UNSPECIFIED_TIMESTAMP) {
+        selectedTimestamp
+    } else {
+        System.currentTimeMillis()
+    }
 
     fun openPicker() {
-        val calendar = Calendar.getInstance().apply { timeInMillis = selectedTimestamp }
+        val calendar = Calendar.getInstance().apply { timeInMillis = baseMillis }
 
         DatePickerDialog(
             context,
@@ -234,7 +296,7 @@ fun EditorDateTimePicker(
                     { _, hourOfDay, minute ->
                         calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
                         calendar.set(Calendar.MINUTE, minute)
-                        onTimestampSelected(calendar.timeInMillis)
+                        onDateTimeSelected(calendar.timeInMillis)
                     },
                     calendar.get(Calendar.HOUR_OF_DAY),
                     calendar.get(Calendar.MINUTE),
@@ -247,15 +309,46 @@ fun EditorDateTimePicker(
         ).show()
     }
 
-    Text(
-        text = sdf.format(Date(selectedTimestamp)),
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = modifier
-            .clip(SmallElementShape)
-            .clickable { openPicker() }
-            .padding(vertical = 4.dp, horizontal = 8.dp)
-    )
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val labelText = when {
+            !isUncertain -> sdf.format(Date(baseMillis))
+            hasDateTime -> sdf.format(Date(baseMillis))
+            else -> "No date / time"
+        }
+
+        val textColor = when {
+            !isUncertain -> MaterialTheme.colorScheme.primary
+            hasDateTime -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        }
+
+        Text(
+            text = labelText,
+            style = MaterialTheme.typography.labelMedium,
+            color = textColor,
+            modifier = Modifier
+                .clip(SmallElementShape)
+                .clickable { openPicker() }
+                .padding(vertical = 4.dp, horizontal = 8.dp)
+        )
+
+        if (isUncertain && hasDateTime) {
+            IconButton(
+                onClick = onClearDateTime,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Clear,
+                    contentDescription = "Clear date and time",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -331,7 +424,8 @@ fun EditorLabelPicker(
 
 private val sampleLabels = listOf(
     Label(id = 1, name = "Work & Coding", colorArgb = 0xFF6200EE.toInt(), orderIndex = 0),
-    Label(id = 2, name = "English", colorArgb = 0xFF03DAC6.toInt(), orderIndex = 1)
+    Label(id = 2, name = "English", colorArgb = 0xFF03DAC6.toInt(), orderIndex = 1),
+    Label(id = 3, name = "Uncertain", colorArgb = 0xFF90A4AE.toInt(), orderIndex = 2, isUncertainOnly = true)
 )
 
 @Preview(group = "Themes", showBackground = true)
@@ -360,7 +454,7 @@ private fun EditorRecordCardEditModePreview(
 
 @Preview(group = "Edge Cases", showBackground = true)
 @Composable
-private fun EditorRecordCardNewModePreview(
+private fun EditorRecordCardUncertainPreview(
     @PreviewParameter(AppThemeModeProvider::class) themeMode: AppThemeMode
 ) {
     TimerTheme(themeMode = themeMode) {
@@ -371,8 +465,8 @@ private fun EditorRecordCardNewModePreview(
             Box(modifier = Modifier.padding(dimensionResource(R.dimen.padding_content_horizontal))) {
                 EditorRecordCard(
                     initialValueSeconds = 0,
-                    initialStartTimestamp = System.currentTimeMillis(),
-                    initialLabelId = null,
+                    initialStartTimestamp = UNSPECIFIED_TIMESTAMP,
+                    initialLabelId = 3,
                     labels = sampleLabels,
                     onConfirm = { _, _, _ -> },
                     onCancel = {}
