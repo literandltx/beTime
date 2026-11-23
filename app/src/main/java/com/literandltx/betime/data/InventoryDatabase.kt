@@ -82,12 +82,6 @@ abstract class InventoryDatabase : RoomDatabase() {
                     Label(name = "Work", colorArgb = Color(0xFF4CAF50).toArgb(), orderIndex = 0),
                     Label(name = "Rest", colorArgb = Color(0xFFFFB300).toArgb(), orderIndex = 1),
                     Label(name = "Study", colorArgb = Color(0xFFFF7043).toArgb(), orderIndex = 2),
-                    Label(
-                        name = "Uncertain",
-                        colorArgb = Color(0xFF90A4AE).toArgb(),
-                        orderIndex = 3,
-                        isUncertainOnly = true
-                    )
                 )
                 for (label in defaultLabels) {
                     labelDao.insert(label)
