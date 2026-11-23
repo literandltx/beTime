@@ -15,9 +15,6 @@ import com.literandltx.betime.data.model.ActivePreset
 import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.data.model.TimerOption
 import com.literandltx.betime.data.model.TimerRecord
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 /**
  * Database class with a singleton Instance object.
@@ -30,9 +27,10 @@ import kotlinx.coroutines.launch
         TimerRecord::class
     ],
     version = 8,
-    exportSchema = false
+    exportSchema = true,
+    autoMigrations = []
 )
-abstract class InventoryDatabase : RoomDatabase() {
+abstract class TimerDatabase : RoomDatabase() {
 
     abstract fun labelDao(): LabelDao
     abstract fun timerOptionDao(): TimerOptionDao
@@ -41,36 +39,30 @@ abstract class InventoryDatabase : RoomDatabase() {
 
     companion object {
         @Volatile
-        private var Instance: InventoryDatabase? = null
+        private var Instance: TimerDatabase? = null
 
-        fun getDatabase(context: Context): InventoryDatabase {
-            // if the Instance is not null, return it, otherwise create a new database instance.
+        fun getDatabase(context: Context): TimerDatabase {
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, InventoryDatabase::class.java, "timer_database")
-                    /**
-                     * Setting this option in your app's database builder means that Room
-                     * permanently deletes all data from the tables in your database when it
-                     * attempts to perform a migration with no defined migration path.
-                     */
-                    .fallbackToDestructiveMigration()
-                    .addCallback(InventoryDatabaseCallback())
+                Instance ?: Room.databaseBuilder(
+                    context.applicationContext,
+                    TimerDatabase::class.java,
+                    "timer_database"
+                )
+                    .addCallback(TimerDatabaseCallback())
                     .build()
                     .also { Instance = it }
             }
         }
 
-        private class InventoryDatabaseCallback : Callback() {
+        private class TimerDatabaseCallback : Callback() {
             override suspend fun onCreate(connection: SQLiteConnection) {
                 super.onCreate(connection)
-                Instance?.let { database ->
-                    CoroutineScope(Dispatchers.IO).launch {
-                        populateDatabase(
-                            labelDao = database.labelDao(),
-                            timerOptionDao = database.timerOptionDao(),
-                            activePresetDao = database.activePresetDao()
-                        )
-                    }
-                }
+                val db = Instance ?: return
+                populateDatabase(
+                    labelDao = db.labelDao(),
+                    timerOptionDao = db.timerOptionDao(),
+                    activePresetDao = db.activePresetDao()
+                )
             }
 
             private suspend fun populateDatabase(
@@ -83,25 +75,22 @@ abstract class InventoryDatabase : RoomDatabase() {
                     Label(name = "Rest", colorArgb = Color(0xFFFFB300).toArgb(), orderIndex = 1),
                     Label(name = "Study", colorArgb = Color(0xFFFF7043).toArgb(), orderIndex = 2),
                 )
-                for (label in defaultLabels) {
-                    labelDao.insert(label)
-                }
+                defaultLabels.forEach { labelDao.insert(it) }
 
                 val defaultTimerOptions = listOf(
                     TimerOption(value = 20),
                     TimerOption(value = 45),
                     TimerOption(value = 60),
                 )
-                for (option in defaultTimerOptions) {
-                    timerOptionDao.insert(option)
-                }
+                defaultTimerOptions.forEach { timerOptionDao.insert(it) }
 
-                val defaultPreset = ActivePreset(
-                    id = 1,
-                    labelId = 1,
-                    timerOptionId = 1
+                activePresetDao.setActivePreset(
+                    ActivePreset(
+                        id = 1,
+                        labelId = 1,
+                        timerOptionId = 1
+                    )
                 )
-                activePresetDao.setActivePreset(defaultPreset)
             }
         }
     }
