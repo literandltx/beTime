@@ -485,40 +485,6 @@ private fun EditorTimeDialog(
     }
 }
 
-private fun localMillisToUtcStartOfDay(localMillis: Long): Long {
-    val localCal = Calendar.getInstance().apply { timeInMillis = localMillis }
-    return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-        clear()
-        set(
-            localCal.get(Calendar.YEAR),
-            localCal.get(Calendar.MONTH),
-            localCal.get(Calendar.DAY_OF_MONTH)
-        )
-    }.timeInMillis
-}
-
-private fun applyUtcDateToLocalMillis(baseLocalMillis: Long, selectedUtcMillis: Long): Long {
-    val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-        timeInMillis = selectedUtcMillis
-    }
-    return Calendar.getInstance().apply {
-        timeInMillis = baseLocalMillis
-        set(Calendar.YEAR, utcCal.get(Calendar.YEAR))
-        set(Calendar.MONTH, utcCal.get(Calendar.MONTH))
-        set(Calendar.DAY_OF_MONTH, utcCal.get(Calendar.DAY_OF_MONTH))
-    }.timeInMillis
-}
-
-private fun applyTimeToLocalMillis(baseMillis: Long, hour: Int, minute: Int): Long {
-    return Calendar.getInstance().apply {
-        timeInMillis = baseMillis
-        set(Calendar.HOUR_OF_DAY, hour)
-        set(Calendar.MINUTE, minute)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
-}
-
 @Composable
 fun EditorLabelPicker(
     labels: List<Label>,
@@ -588,6 +554,40 @@ fun EditorLabelPicker(
             }
         }
     }
+}
+
+private fun localMillisToUtcStartOfDay(localMillis: Long): Long {
+    val localCal = Calendar.getInstance().apply { timeInMillis = localMillis }
+    return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        clear()
+        set(
+            localCal.get(Calendar.YEAR),
+            localCal.get(Calendar.MONTH),
+            localCal.get(Calendar.DAY_OF_MONTH)
+        )
+    }.timeInMillis
+}
+
+private fun applyUtcDateToLocalMillis(baseLocalMillis: Long, selectedUtcMillis: Long): Long {
+    val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        timeInMillis = selectedUtcMillis
+    }
+    return Calendar.getInstance().apply {
+        timeInMillis = baseLocalMillis
+        set(Calendar.YEAR, utcCal.get(Calendar.YEAR))
+        set(Calendar.MONTH, utcCal.get(Calendar.MONTH))
+        set(Calendar.DAY_OF_MONTH, utcCal.get(Calendar.DAY_OF_MONTH))
+    }.timeInMillis
+}
+
+private fun applyTimeToLocalMillis(baseMillis: Long, hour: Int, minute: Int): Long {
+    return Calendar.getInstance().apply {
+        timeInMillis = baseMillis
+        set(Calendar.HOUR_OF_DAY, hour)
+        set(Calendar.MINUTE, minute)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
 }
 
 private val sampleLabels = listOf(
