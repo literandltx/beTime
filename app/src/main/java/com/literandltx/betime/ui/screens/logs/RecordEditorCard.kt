@@ -88,7 +88,8 @@ fun EditorRecordCard(
     onConfirm: (durationSeconds: Int, startTimestamp: Long, labelId: Int?) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
-    shape: Shape = MaterialTheme.shapes.large
+    shape: Shape = MaterialTheme.shapes.large,
+    force24Hour: Boolean? = null
 ) {
     var textFieldValue by remember(initialValueSeconds) {
         val initialMinutes = if (initialValueSeconds > 0) (initialValueSeconds / 60).toString() else ""
@@ -212,6 +213,7 @@ fun EditorRecordCard(
                         hasDateTime = false
                         selectedTimestamp = UNSPECIFIED_TIMESTAMP
                     },
+                    force24Hour = force24Hour,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -284,12 +286,16 @@ fun EditorDateTimePicker(
     hasDateTime: Boolean,
     onDateTimeSelected: (Long) -> Unit,
     onClearDateTime: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    force24Hour: Boolean? = null
 ) {
     val context = LocalContext.current
     val locale = LocalLocale.current
-    val sdf = remember(locale) { SimpleDateFormat("MMM d, yyyy, h:mm:ss a", locale.platformLocale) }
-    val is24Hour = remember(context) { DateFormat.is24HourFormat(context) }
+    val is24Hour = remember(context, force24Hour) {
+        force24Hour ?: DateFormat.is24HourFormat(context)
+    }
+    val pattern = if (is24Hour) "MMM d, yyyy, HH:mm:ss" else "MMM d, yyyy, h:mm:ss a"
+    val sdf = remember(locale, pattern) { SimpleDateFormat(pattern, locale.platformLocale) }
 
     val baseMillis = if (selectedTimestamp > UNSPECIFIED_TIMESTAMP) {
         selectedTimestamp
