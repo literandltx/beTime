@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.SubdirectoryArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -38,8 +42,11 @@ fun LabelCard(
     label: Label,
     isActive: Boolean,
     modifier: Modifier = Modifier,
+    hasSubLabels: Boolean = false,
+    isSubLabelsCollapsed: Boolean = false,
     shape: Shape = MaterialTheme.shapes.large,
     dragModifier: Modifier = Modifier,
+    onToggleCollapseSubLabels: () -> Unit = {},
     onAddSubLabelClick: (() -> Unit)? = null,
     onEditClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
@@ -111,6 +118,27 @@ fun LabelCard(
                 }
             )
             Spacer(modifier = Modifier.weight(1f))
+            if (!isSubLabel && hasSubLabels) {
+                IconButton(
+                    onClick = onToggleCollapseSubLabels,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isSubLabelsCollapsed) {
+                            Icons.Outlined.ExpandMore
+                        } else {
+                            Icons.Outlined.ExpandLess
+                        },
+                        contentDescription = stringResource(
+                            if (isSubLabelsCollapsed) {
+                                R.string.showSubLabelsAction
+                            } else {
+                                R.string.hideSubLabelsAction
+                            }
+                        )
+                    )
+                }
+            }
             OptionsMenu(
                 onEditClick = onEditClick,
                 onDeleteClick = onDeleteClick,

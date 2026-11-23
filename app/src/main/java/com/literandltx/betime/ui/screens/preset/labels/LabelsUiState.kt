@@ -7,10 +7,12 @@ import sh.calvin.reorderable.ReorderableLazyListState
 
 data class LabelsListState(
     val list: List<Label>,
+    val parentIdsWithSubLabels: Set<Int>,
     val activeLabelId: Int?,
     val isAdding: Boolean,
     val addingParentId: Int?,
     val editingLabelId: Int?,
+    val collapsedParentIds: Set<Int>,
     val lazyListState: LazyListState,
     val reorderableLazyColumnState: ReorderableLazyListState
 )
@@ -22,6 +24,7 @@ data class LabelsListActions(
     val onStartEdit: (Label) -> Unit,
     val onConfirmEdit: (Label) -> Unit,
     val onCancelEdit: () -> Unit,
+    val onToggleCollapseSubLabels: (parentId: Int) -> Unit,
     val onReorderFinished: (List<Label>) -> Unit,
     val onDeleteClick: (Label) -> Unit,
     val onToggleClick: (Label) -> Unit

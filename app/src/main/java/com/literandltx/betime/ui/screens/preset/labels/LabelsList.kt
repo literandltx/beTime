@@ -73,9 +73,12 @@ fun LabelsList(
                         LabelCard(
                             label = label,
                             isActive = label.id == state.activeLabelId,
+                            hasSubLabels = label.parentId == null && label.id in state.parentIdsWithSubLabels,
+                            isSubLabelsCollapsed = label.id in state.collapsedParentIds,
                             dragModifier = Modifier.draggableHandle(
                                 onDragStopped = { actions.onReorderFinished(state.list.toList()) }
                             ),
+                            onToggleCollapseSubLabels = { actions.onToggleCollapseSubLabels(label.id) },
                             onAddSubLabelClick = { actions.onStartAddSubLabel(label.id) },
                             onEditClick = { actions.onStartEdit(label) },
                             onDeleteClick = { actions.onDeleteClick(label) },

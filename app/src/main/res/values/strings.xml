@@ -17,6 +17,8 @@
     <string name="cancelAction">Cancel</string>
     <string name="undoAction">Undo</string>
     <string name="addSubLabelAction">Add sub-label</string>
+    <string name="hideSubLabelsAction">Hide sub-labels</string>
+    <string name="showSubLabelsAction">Show sub-labels</string>
     <string name="exportCSVAction">Export CSV</string>
     <string name="importCSVAction">Import CSV</string>
 

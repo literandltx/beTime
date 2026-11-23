@@ -3,7 +3,10 @@ package com.literandltx.betime.ui.screens.preset.labels
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,7 +31,13 @@ fun LabelsContent(
     onDeleteClick: (Label) -> Unit = {},
     onToggleClick: (Label) -> Unit = {}
 ) {
-    val orderedHierarchy = remember(labels) {
+    var collapsedParentIds by remember { mutableStateOf(setOf<Int>()) }
+
+    val parentIdsWithSubLabels = remember(labels) {
+        labels.mapNotNull { it.parentId }.toSet()
+    }
+
+    val orderedHierarchy = remember(labels, collapsedParentIds) {
         val roots = labels.filter { it.parentId == null }.sortedBy { it.orderIndex }
         val subsByParent = labels
             .filter { it.parentId != null }
@@ -38,7 +47,9 @@ fun LabelsContent(
         buildList {
             roots.forEach { root ->
                 add(root)
-                addAll(subsByParent[root.id].orEmpty())
+                if (root.id !in collapsedParentIds) {
+                    addAll(subsByParent[root.id].orEmpty())
+                }
             }
         }
     }
@@ -86,20 +97,32 @@ fun LabelsContent(
     LabelsList(
         state = LabelsListState(
             list = list,
+            parentIdsWithSubLabels = parentIdsWithSubLabels,
             activeLabelId = activeLabelId,
             isAdding = isAdding,
             addingParentId = addingParentId,
             editingLabelId = editingLabelId,
+            collapsedParentIds = collapsedParentIds,
             lazyListState = lazyListState,
             reorderableLazyColumnState = reorderableLazyColumnState
         ),
         actions = LabelsListActions(
             onConfirmAdd = onConfirmAdd,
             onCancelAdd = onCancelAdd,
-            onStartAddSubLabel = onStartAddSubLabel,
+            onStartAddSubLabel = { parentId ->
+                collapsedParentIds = collapsedParentIds - parentId
+                onStartAddSubLabel(parentId)
+            },
             onStartEdit = onStartEdit,
             onConfirmEdit = onConfirmEdit,
             onCancelEdit = onCancelEdit,
+            onToggleCollapseSubLabels = { parentId ->
+                collapsedParentIds = if (parentId in collapsedParentIds) {
+                    collapsedParentIds - parentId
+                } else {
+                    collapsedParentIds + parentId
+                }
+            },
             onReorderFinished = onReorderFinished,
             onDeleteClick = onDeleteClick,
             onToggleClick = onToggleClick
