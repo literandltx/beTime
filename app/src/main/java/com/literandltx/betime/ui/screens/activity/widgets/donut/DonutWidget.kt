@@ -178,7 +178,7 @@ private fun DonutContent(
         contentAlignment = Alignment.Center
     ) {
         val donutSize = min(maxWidth, maxHeight) * 0.72f
-        val statsHeight = maxHeight * 0.26f
+        val statsHeight = maxHeight * 0.25f
 
         Column(
             modifier = Modifier

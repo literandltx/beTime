@@ -49,10 +49,9 @@ fun StatsList(
     FlowRow(
         modifier = modifier
             .verticalScroll(scrollState)
-            .clickable { showPercentage = !showPercentage }
-            .padding(vertical = 4.dp),
+            .clickable { showPercentage = !showPercentage },
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         sortedStats.forEach { (label, time) ->
             StatsListItem(

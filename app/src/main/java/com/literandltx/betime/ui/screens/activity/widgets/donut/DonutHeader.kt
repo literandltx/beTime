@@ -59,7 +59,9 @@ fun DonutHeader(
     val hasSubLabels = remember(labels) { labels.any { it.parentId != null } }
 
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .padding(0.dp)
+            .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -168,7 +170,21 @@ fun HeaderPreview(
                 DonutHeader(
                     selectedTimeSpan = state.timeSpan,
                     timeOffset = 0,
-                    labels = listOf(),
+                    labels = listOf(
+                        Label(
+                            id = 1,
+                            name = "Work",
+                            colorArgb = 0xFFFF5722.toInt(),
+                            orderIndex = 0
+                        ),
+                        Label(
+                            id = 2,
+                            parentId = 1,
+                            name = "Deep Work",
+                            colorArgb = 0xFFE64A19.toInt(),
+                            orderIndex = 0
+                        )
+                    ),
                     selectedLabels = setOf(),
                     groupSubLabels = false,
                     onToggleGroupSubLabels = { },
