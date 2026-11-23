@@ -1,7 +1,6 @@
 package com.literandltx.betime.ui.screens.logs
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
+import android.text.format.DateFormat
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,17 +15,28 @@ import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.LocalOffer
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimeInput
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -64,6 +74,7 @@ import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.TimeZone
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val UNSPECIFIED_TIMESTAMP = 0L
@@ -262,6 +273,7 @@ private fun EditorDurationInput(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditorDateTimePicker(
     selectedTimestamp: Long,
@@ -274,6 +286,7 @@ fun EditorDateTimePicker(
     val context = LocalContext.current
     val locale = LocalLocale.current
     val sdf = remember(locale) { SimpleDateFormat("MMM d, yyyy, h:mm:ss a", locale.platformLocale) }
+    val is24Hour = remember(context) { DateFormat.is24HourFormat(context) }
 
     val baseMillis = if (selectedTimestamp > UNSPECIFIED_TIMESTAMP) {
         selectedTimestamp
@@ -281,33 +294,9 @@ fun EditorDateTimePicker(
         System.currentTimeMillis()
     }
 
-    fun openPicker() {
-        val calendar = Calendar.getInstance().apply { timeInMillis = baseMillis }
-
-        DatePickerDialog(
-            context,
-            { _, year, month, dayOfMonth ->
-                calendar.set(Calendar.YEAR, year)
-                calendar.set(Calendar.MONTH, month)
-                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-
-                TimePickerDialog(
-                    context,
-                    { _, hourOfDay, minute ->
-                        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
-                        calendar.set(Calendar.MINUTE, minute)
-                        onDateTimeSelected(calendar.timeInMillis)
-                    },
-                    calendar.get(Calendar.HOUR_OF_DAY),
-                    calendar.get(Calendar.MINUTE),
-                    false
-                ).show()
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        ).show()
-    }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+    var pendingDateMillis by remember { mutableLongStateOf(baseMillis) }
 
     Row(
         modifier = modifier,
@@ -331,7 +320,10 @@ fun EditorDateTimePicker(
             color = textColor,
             modifier = Modifier
                 .clip(SmallElementShape)
-                .clickable { openPicker() }
+                .clickable {
+                    pendingDateMillis = baseMillis
+                    showDatePicker = true
+                }
                 .padding(vertical = 4.dp, horizontal = 8.dp)
         )
 
@@ -346,6 +338,141 @@ fun EditorDateTimePicker(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp)
                 )
+            }
+        }
+    }
+
+    if (showDatePicker) {
+        val localCal = remember(pendingDateMillis) {
+            Calendar.getInstance().apply { timeInMillis = pendingDateMillis }
+        }
+        val initialUtcMillis = remember(pendingDateMillis) {
+            Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                clear()
+                set(
+                    localCal.get(Calendar.YEAR),
+                    localCal.get(Calendar.MONTH),
+                    localCal.get(Calendar.DAY_OF_MONTH)
+                )
+            }.timeInMillis
+        }
+
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = initialUtcMillis
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { selectedUtcMillis ->
+                            val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                                timeInMillis = selectedUtcMillis
+                            }
+                            val updatedLocalCal = Calendar.getInstance().apply {
+                                timeInMillis = pendingDateMillis
+                                set(Calendar.YEAR, utcCal.get(Calendar.YEAR))
+                                set(Calendar.MONTH, utcCal.get(Calendar.MONTH))
+                                set(Calendar.DAY_OF_MONTH, utcCal.get(Calendar.DAY_OF_MONTH))
+                            }
+                            pendingDateMillis = updatedLocalCal.timeInMillis
+                            showDatePicker = false
+                            showTimePicker = true
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(R.string.cancelAction))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showTimePicker) {
+        val currentCal = remember(pendingDateMillis) {
+            Calendar.getInstance().apply { timeInMillis = pendingDateMillis }
+        }
+        val timePickerState = rememberTimePickerState(
+            initialHour = currentCal.get(Calendar.HOUR_OF_DAY),
+            initialMinute = currentCal.get(Calendar.MINUTE),
+            is24Hour = is24Hour
+        )
+        var showKeyboardInput by remember { mutableStateOf(false) }
+
+        BasicAlertDialog(
+            onDismissRequest = { showTimePicker = false }
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                tonalElevation = 6.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Select time",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 20.dp)
+                    )
+
+                    if (showKeyboardInput) {
+                        TimeInput(state = timePickerState)
+                    } else {
+                        TimePicker(state = timePickerState)
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        IconButton(onClick = { showKeyboardInput = !showKeyboardInput }) {
+                            Icon(
+                                imageVector = if (showKeyboardInput) {
+                                    Icons.Outlined.AccessTime
+                                } else {
+                                    Icons.Outlined.Keyboard
+                                },
+                                contentDescription = null
+                            )
+                        }
+
+                        Row {
+                            TextButton(onClick = { showTimePicker = false }) {
+                                Text(stringResource(R.string.cancelAction))
+                            }
+                            TextButton(
+                                onClick = {
+                                    val finalCal = Calendar.getInstance().apply {
+                                        timeInMillis = pendingDateMillis
+                                        set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                                        set(Calendar.MINUTE, timePickerState.minute)
+                                        set(Calendar.SECOND, 0)
+                                        set(Calendar.MILLISECOND, 0)
+                                    }
+                                    onDateTimeSelected(finalCal.timeInMillis)
+                                    showTimePicker = false
+                                }
+                            ) {
+                                Text(stringResource(R.string.ok))
+                            }
+                        }
+                    }
+                }
             }
         }
     }
