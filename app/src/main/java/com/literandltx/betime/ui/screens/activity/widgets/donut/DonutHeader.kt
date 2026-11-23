@@ -76,7 +76,7 @@ fun DonutHeader(
             customStartDate = customStartDate,
             customEndDate = customEndDate,
             onClick = onRangeClick,
-            modifier = Modifier.weight(1f, fill = false)
+            modifier = Modifier.weight(1f)
         )
 
         Row(
