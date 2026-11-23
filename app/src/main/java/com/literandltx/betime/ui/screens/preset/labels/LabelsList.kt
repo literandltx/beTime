@@ -66,16 +66,18 @@ fun LabelsList(
                         onCancel = actions.onCancelEdit
                     )
                 } else {
-                    LabelCard(
-                        label = label,
-                        isActive = label.id == state.activeLabelId,
-                        dragModifier = Modifier.draggableHandle(
-                            onDragStopped = { actions.onReorderFinished(state.list.toList()) }
-                        ),
-                        onEditClick = { actions.onStartEdit(label) },
-                        onDeleteClick = { actions.onDeleteClick(label) },
-                        onToggleClick = { actions.onToggleClick(label) }
-                    )
+                    if (!label.isUncertainOnly) {
+                        LabelCard(
+                            label = label,
+                            isActive = label.id == state.activeLabelId,
+                            dragModifier = Modifier.draggableHandle(
+                                onDragStopped = { actions.onReorderFinished(state.list.toList()) }
+                            ),
+                            onEditClick = { actions.onStartEdit(label) },
+                            onDeleteClick = { actions.onDeleteClick(label) },
+                            onToggleClick = { actions.onToggleClick(label) }
+                        )
+                    }
                 }
             }
         }

@@ -36,6 +36,7 @@
     <string name="newLabelPlaceholder">New label…</string>
     <string name="newTimerPlaceholder">New timer…</string>
     <string name="durationPlaceholder">Duration (min)…</string>
+    <string name="durationOptionalPlaceholder">Duration optional (min)…</string>
     <string name="timerValuePlaceholder">Timer value (min)…</string>
 
     <!-- Description -->

@@ -7,14 +7,14 @@ import androidx.room3.Database
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
 import androidx.sqlite.SQLiteConnection
-import com.literandltx.betime.data.model.Label
-import com.literandltx.betime.data.dao.LabelDao
-import com.literandltx.betime.data.model.TimerOption
-import com.literandltx.betime.data.dao.TimerOptionDao
-import com.literandltx.betime.data.model.ActivePreset
 import com.literandltx.betime.data.dao.ActivePresetDao
-import com.literandltx.betime.data.model.TimerRecord
+import com.literandltx.betime.data.dao.LabelDao
+import com.literandltx.betime.data.dao.TimerOptionDao
 import com.literandltx.betime.data.dao.TimerRecordDao
+import com.literandltx.betime.data.model.ActivePreset
+import com.literandltx.betime.data.model.Label
+import com.literandltx.betime.data.model.TimerOption
+import com.literandltx.betime.data.model.TimerRecord
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
         ActivePreset::class,
         TimerRecord::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class InventoryDatabase : RoomDatabase() {
@@ -81,7 +81,13 @@ abstract class InventoryDatabase : RoomDatabase() {
                 val defaultLabels = listOf(
                     Label(name = "Work", colorArgb = Color(0xFF4CAF50).toArgb(), orderIndex = 0),
                     Label(name = "Rest", colorArgb = Color(0xFFFFB300).toArgb(), orderIndex = 1),
-                    Label(name = "Study", colorArgb = Color(0xFFFF7043).toArgb(), orderIndex = 2)
+                    Label(name = "Study", colorArgb = Color(0xFFFF7043).toArgb(), orderIndex = 2),
+                    Label(
+                        name = "Uncertain",
+                        colorArgb = Color(0xFF90A4AE).toArgb(),
+                        orderIndex = 3,
+                        isUncertainOnly = true
+                    )
                 )
                 for (label in defaultLabels) {
                     labelDao.insert(label)
