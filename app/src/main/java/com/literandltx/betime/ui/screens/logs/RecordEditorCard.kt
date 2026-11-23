@@ -1,7 +1,6 @@
 package com.literandltx.betime.ui.screens.logs
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
+import android.text.format.DateFormat
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,17 +15,28 @@ import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.LocalOffer
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimeInput
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -64,6 +74,7 @@ import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.TimeZone
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val UNSPECIFIED_TIMESTAMP = 0L
@@ -149,7 +160,11 @@ fun EditorRecordCard(
         }
     }
 
-    val placeholder = if (isUncertainSelected) stringResource(R.string.durationOptionalPlaceholder) else stringResource(R.string.durationPlaceholder)
+    val placeholder = if (isUncertainSelected) {
+        stringResource(R.string.durationOptionalPlaceholder)
+    } else {
+        stringResource(R.string.durationPlaceholder)
+    }
 
     Card(
         modifier = modifier
@@ -274,6 +289,7 @@ fun EditorDateTimePicker(
     val context = LocalContext.current
     val locale = LocalLocale.current
     val sdf = remember(locale) { SimpleDateFormat("MMM d, yyyy, h:mm:ss a", locale.platformLocale) }
+    val is24Hour = remember(context) { DateFormat.is24HourFormat(context) }
 
     val baseMillis = if (selectedTimestamp > UNSPECIFIED_TIMESTAMP) {
         selectedTimestamp
@@ -281,57 +297,32 @@ fun EditorDateTimePicker(
         System.currentTimeMillis()
     }
 
-    fun openPicker() {
-        val calendar = Calendar.getInstance().apply { timeInMillis = baseMillis }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+    var pendingMillis by remember { mutableLongStateOf(baseMillis) }
 
-        DatePickerDialog(
-            context,
-            { _, year, month, dayOfMonth ->
-                calendar.set(Calendar.YEAR, year)
-                calendar.set(Calendar.MONTH, month)
-                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-
-                TimePickerDialog(
-                    context,
-                    { _, hourOfDay, minute ->
-                        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
-                        calendar.set(Calendar.MINUTE, minute)
-                        onDateTimeSelected(calendar.timeInMillis)
-                    },
-                    calendar.get(Calendar.HOUR_OF_DAY),
-                    calendar.get(Calendar.MINUTE),
-                    false
-                ).show()
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        ).show()
+    val showDateTimeLabel = !isUncertain || hasDateTime
+    val labelText = if (showDateTimeLabel) sdf.format(Date(baseMillis)) else "No date / time"
+    val textColor = if (showDateTimeLabel) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        val labelText = when {
-            !isUncertain -> sdf.format(Date(baseMillis))
-            hasDateTime -> sdf.format(Date(baseMillis))
-            else -> "No date / time"
-        }
-
-        val textColor = when {
-            !isUncertain -> MaterialTheme.colorScheme.primary
-            hasDateTime -> MaterialTheme.colorScheme.primary
-            else -> MaterialTheme.colorScheme.onSurfaceVariant
-        }
-
         Text(
             text = labelText,
             style = MaterialTheme.typography.labelMedium,
             color = textColor,
             modifier = Modifier
                 .clip(SmallElementShape)
-                .clickable { openPicker() }
+                .clickable {
+                    pendingMillis = baseMillis
+                    showDatePicker = true
+                }
                 .padding(vertical = 4.dp, horizontal = 8.dp)
         )
 
@@ -349,6 +340,183 @@ fun EditorDateTimePicker(
             }
         }
     }
+
+    if (showDatePicker) {
+        EditorDateDialog(
+            initialMillis = pendingMillis,
+            onDismiss = { showDatePicker = false },
+            onDateConfirmed = { updatedMillis ->
+                pendingMillis = updatedMillis
+                showDatePicker = false
+                showTimePicker = true
+            }
+        )
+    }
+
+    if (showTimePicker) {
+        EditorTimeDialog(
+            initialMillis = pendingMillis,
+            is24Hour = is24Hour,
+            onDismiss = { showTimePicker = false },
+            onTimeConfirmed = { finalMillis ->
+                onDateTimeSelected(finalMillis)
+                showTimePicker = false
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditorDateDialog(
+    initialMillis: Long,
+    onDismiss: () -> Unit,
+    onDateConfirmed: (Long) -> Unit
+) {
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = localMillisToUtcStartOfDay(initialMillis)
+    )
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    datePickerState.selectedDateMillis?.let { utcMillis ->
+                        onDateConfirmed(applyUtcDateToLocalMillis(initialMillis, utcMillis))
+                    }
+                }
+            ) {
+                Text(stringResource(R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancelAction))
+            }
+        }
+    ) {
+        DatePicker(state = datePickerState)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditorTimeDialog(
+    initialMillis: Long,
+    is24Hour: Boolean,
+    onDismiss: () -> Unit,
+    onTimeConfirmed: (Long) -> Unit
+) {
+    val initialCal = remember(initialMillis) {
+        Calendar.getInstance().apply { timeInMillis = initialMillis }
+    }
+    val timePickerState = rememberTimePickerState(
+        initialHour = initialCal.get(Calendar.HOUR_OF_DAY),
+        initialMinute = initialCal.get(Calendar.MINUTE),
+        is24Hour = is24Hour
+    )
+    var showKeyboardInput by remember { mutableStateOf(false) }
+
+    BasicAlertDialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Select time",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                )
+
+                if (showKeyboardInput) {
+                    TimeInput(state = timePickerState)
+                } else {
+                    TimePicker(state = timePickerState)
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(onClick = { showKeyboardInput = !showKeyboardInput }) {
+                        Icon(
+                            imageVector = if (showKeyboardInput) {
+                                Icons.Outlined.AccessTime
+                            } else {
+                                Icons.Outlined.Keyboard
+                            },
+                            contentDescription = null
+                        )
+                    }
+
+                    Row {
+                        TextButton(onClick = onDismiss) {
+                            Text(stringResource(R.string.cancelAction))
+                        }
+                        TextButton(
+                            onClick = {
+                                onTimeConfirmed(
+                                    applyTimeToLocalMillis(
+                                        baseMillis = initialMillis,
+                                        hour = timePickerState.hour,
+                                        minute = timePickerState.minute
+                                    )
+                                )
+                            }
+                        ) {
+                            Text(stringResource(R.string.ok))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun localMillisToUtcStartOfDay(localMillis: Long): Long {
+    val localCal = Calendar.getInstance().apply { timeInMillis = localMillis }
+    return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        clear()
+        set(
+            localCal.get(Calendar.YEAR),
+            localCal.get(Calendar.MONTH),
+            localCal.get(Calendar.DAY_OF_MONTH)
+        )
+    }.timeInMillis
+}
+
+private fun applyUtcDateToLocalMillis(baseLocalMillis: Long, selectedUtcMillis: Long): Long {
+    val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        timeInMillis = selectedUtcMillis
+    }
+    return Calendar.getInstance().apply {
+        timeInMillis = baseLocalMillis
+        set(Calendar.YEAR, utcCal.get(Calendar.YEAR))
+        set(Calendar.MONTH, utcCal.get(Calendar.MONTH))
+        set(Calendar.DAY_OF_MONTH, utcCal.get(Calendar.DAY_OF_MONTH))
+    }.timeInMillis
+}
+
+private fun applyTimeToLocalMillis(baseMillis: Long, hour: Int, minute: Int): Long {
+    return Calendar.getInstance().apply {
+        timeInMillis = baseMillis
+        set(Calendar.HOUR_OF_DAY, hour)
+        set(Calendar.MINUTE, minute)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
 }
 
 @Composable
