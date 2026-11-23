@@ -2,13 +2,13 @@ package com.literandltx.betime.ui.screens.preset
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.literandltx.betime.data.model.Label
-import com.literandltx.betime.data.repository.LabelsRepository
-import com.literandltx.betime.data.model.TimerOption
-import com.literandltx.betime.data.repository.TimerOptionsRepository
 import com.literandltx.betime.data.model.ActivePreset
-import com.literandltx.betime.data.repository.ActivePresetRepository
 import com.literandltx.betime.data.model.ActivePresetWithDetails
+import com.literandltx.betime.data.model.Label
+import com.literandltx.betime.data.model.TimerOption
+import com.literandltx.betime.data.repository.ActivePresetRepository
+import com.literandltx.betime.data.repository.LabelsRepository
+import com.literandltx.betime.data.repository.TimerOptionsRepository
 import com.literandltx.betime.util.STOP_TIMEOUT_MILLIS
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -46,8 +46,8 @@ class PresetViewModel(
 
     fun insert(label: Label) {
         viewModelScope.launch {
-            val currentCount = presetUiState.value.labelList.size
-            labelsRepository.insertLabel(label.copy(orderIndex = currentCount))
+            val siblingCount = presetUiState.value.labelList.count { it.parentId == label.parentId }
+            labelsRepository.insertLabel(label.copy(orderIndex = siblingCount))
         }
     }
 

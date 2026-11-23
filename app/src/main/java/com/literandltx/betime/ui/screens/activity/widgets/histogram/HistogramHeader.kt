@@ -19,7 +19,7 @@ import com.literandltx.betime.R
 import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.data.preferences.AppThemeMode
 import com.literandltx.betime.data.preferences.AppThemeModeProvider
-import com.literandltx.betime.ui.screens.activity.shared.HistogramRangeSelectorWithTextButton
+import com.literandltx.betime.ui.screens.activity.shared.RangeSelectorWithTextButton
 import com.literandltx.betime.ui.screens.activity.shared.TimeSpan
 import com.literandltx.betime.ui.shared.LabelIconButton
 import com.literandltx.betime.ui.shared.NextIconButton
@@ -51,7 +51,7 @@ fun HistogramHeader(
             modifier = Modifier.align(Alignment.CenterStart)
         )
 
-        HistogramRangeSelectorWithTextButton(
+        RangeSelectorWithTextButton(
             selectedTimeSpan = selectedTimeSpan,
             timeOffset = timeOffset,
             onClick = onTitleClick,

@@ -96,6 +96,7 @@ fun PresetContent(
     onReorderFinished: (List<Label>) -> Unit = {}
 ) {
     var isAddingLabel by remember { mutableStateOf(false) }
+    var addingParentId by remember { mutableStateOf<Int?>(null) }
     var editingLabelId by remember { mutableStateOf<Int?>(null) }
     var isAddingTimerOption by remember { mutableStateOf(false) }
     var isEditingTimerOption by remember { mutableStateOf(false) }
@@ -145,6 +146,7 @@ fun PresetContent(
                     )
                     focusManager.clearFocus()
                     isAddingLabel = false
+                    addingParentId = null
                     editingLabelId = null
                     isAddingTimerOption = false
                 })
@@ -216,25 +218,45 @@ fun PresetContent(
             LabelsHeader(onStartAddClick = {
                 Log.d(TAG_LABELS, "Add Clicked: Setting isAddingLabel=true, clearing editingLabelId")
                 editingLabelId = null
+                addingParentId = null
                 isAddingLabel = true
             })
             LabelsContent(
                 labels = displayedLabels,
                 activeLabelId = activeLabelId,
                 isAdding = isAddingLabel,
+                addingParentId = addingParentId,
                 editingLabelId = editingLabelId,
-                onConfirmAdd = { name, color ->
-                    Log.i(TAG_LABELS, "Label Added: '$name'. Resetting isAddingLabel=false")
-                    onAddLabelClick(Label(name = name, colorArgb = color.toArgb()))
+                onConfirmAdd = { name, color, parentId ->
+                    Log.i(
+                        TAG_LABELS,
+                        "Label Added: '$name' (parentId=$parentId). Resetting add state"
+                    )
+                    onAddLabelClick(
+                        Label(
+                            name = name,
+                            colorArgb = color.toArgb(),
+                            parentId = parentId
+                        )
+                    )
                     isAddingLabel = false
+                    addingParentId = null
                 },
                 onCancelAdd = {
-                    Log.d(TAG_LABELS, "Add Label Cancelled: Resetting isAddingLabel=false")
+                    Log.d(TAG_LABELS, "Add Label Cancelled: Resetting add state")
                     isAddingLabel = false
+                    addingParentId = null
+                },
+                onStartAddSubLabel = { parentId ->
+                    Log.d(TAG_LABELS, "Start Add SubLabel for parentId=$parentId")
+                    editingLabelId = null
+                    addingParentId = parentId
+                    isAddingLabel = true
                 },
                 onStartEdit = { label ->
                     Log.d(TAG_LABELS, "Edit Label Started: '${label.name}' (ID: ${label.id})")
                     isAddingLabel = false
+                    addingParentId = null
                     editingLabelId = label.id
                 },
                 onConfirmEdit = { updatedLabel ->

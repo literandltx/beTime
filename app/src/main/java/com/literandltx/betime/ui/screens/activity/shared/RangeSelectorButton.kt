@@ -3,6 +3,7 @@ package com.literandltx.betime.ui.screens.activity.shared
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -12,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import com.literandltx.betime.R
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -46,9 +48,12 @@ fun RangeSelectorButton(
 
     TextButton(
         onClick = onClick,
-        modifier = modifier
+        modifier = modifier.fillMaxWidth()
     ) {
-        Text(text = dateTitleText)
+        Text(
+            text = dateTitleText,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
@@ -82,7 +87,7 @@ fun RangeSelectorWithTextButton(
 
     TextButton(
         onClick = onClick,
-        modifier = modifier
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(
             verticalArrangement = Arrangement.Center,
@@ -92,6 +97,7 @@ fun RangeSelectorWithTextButton(
 
             Text(
                 text = text,
+                textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.Gray,
             )
