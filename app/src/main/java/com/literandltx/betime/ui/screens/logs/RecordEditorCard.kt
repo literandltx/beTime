@@ -302,7 +302,7 @@ fun EditorDateTimePicker(
     var pendingMillis by remember { mutableLongStateOf(baseMillis) }
 
     val showDateTimeLabel = !isUncertain || hasDateTime
-    val labelText = if (showDateTimeLabel) sdf.format(Date(baseMillis)) else "No date / time"
+    val labelText = if (showDateTimeLabel) sdf.format(Date(baseMillis)) else stringResource(R.string.noDateTime)
     val textColor = if (showDateTimeLabel) {
         MaterialTheme.colorScheme.primary
     } else {
@@ -333,7 +333,7 @@ fun EditorDateTimePicker(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Clear,
-                    contentDescription = "Clear date and time",
+                    contentDescription = stringResource(R.string.clearDateTimeAction),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp)
                 )
@@ -429,7 +429,7 @@ private fun EditorTimeDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Select time",
+                    text = stringResource(R.string.selectTimeTitle),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
@@ -457,7 +457,13 @@ private fun EditorTimeDialog(
                             } else {
                                 Icons.Outlined.Keyboard
                             },
-                            contentDescription = null
+                            contentDescription = stringResource(
+                                if (showKeyboardInput) {
+                                    R.string.switchToClockInputAction
+                                } else {
+                                    R.string.switchToKeyboardInputAction
+                                }
+                            )
                         )
                     }
 
