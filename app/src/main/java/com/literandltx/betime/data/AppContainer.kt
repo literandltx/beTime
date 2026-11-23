@@ -24,25 +24,25 @@ class AppDataContainer(private val context: Context) : AppContainer {
 
     override val labelsRepository: LabelsRepository by lazy {
         OfflineLabelsRepository(
-            labelDao = InventoryDatabase.getDatabase(context).labelDao()
+            labelDao = TimerDatabase.getDatabase(context).labelDao()
         )
     }
 
     override val timerOptionRepository: TimerOptionsRepository by lazy {
         OfflineTimerOptionsRepository(
-            timerOptionDao = InventoryDatabase.getDatabase(context).timerOptionDao()
+            timerOptionDao = TimerDatabase.getDatabase(context).timerOptionDao()
         )
     }
 
     override val activePresetRepository: ActivePresetRepository by lazy {
         OfflineActivePresetRepository(
-            activePresetDao = InventoryDatabase.getDatabase(context).activePresetDao()
+            activePresetDao = TimerDatabase.getDatabase(context).activePresetDao()
         )
     }
 
     override val timerRecordRepository: TimerRecordRepository by lazy {
         OfflineTimerRecordRepository(
-            timerRecordDao = InventoryDatabase.getDatabase(context).timerRecordDao()
+            timerRecordDao = TimerDatabase.getDatabase(context).timerRecordDao()
         )
     }
 
