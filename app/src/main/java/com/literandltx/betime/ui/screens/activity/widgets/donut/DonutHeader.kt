@@ -70,6 +70,8 @@ fun DonutHeader(
             isEnabled = isPrevEnabled
         )
 
+        DonutLabelToggleButton(hasSubLabels, onToggleGroupSubLabels, groupSubLabels)
+
         RangeSelectorButton(
             selectedTimeSpan = selectedTimeSpan,
             timeOffset = timeOffset,
@@ -79,48 +81,49 @@ fun DonutHeader(
             modifier = Modifier.weight(1f)
         )
 
-        Row(
-            modifier = Modifier.padding(end = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
+        LabelSelector(
+            labels = labels,
+            selectedLabels = selectedLabels,
+            onLabelsChanged = onLabelsChanged
+        )
+
+        NextIconButton(
+            onClick = onNextClick,
+            isEnabled = isNextEnabled
+        )
+    }
+}
+
+@Composable
+private fun DonutLabelToggleButton(
+    hasSubLabels: Boolean,
+    onToggleGroupSubLabels: () -> Unit,
+    groupSubLabels: Boolean
+) {
+    if (hasSubLabels) {
+        IconButton(
+            onClick = onToggleGroupSubLabels,
+            modifier = Modifier.size(36.dp)
         ) {
-            if (hasSubLabels) {
-                IconButton(
-                    onClick = onToggleGroupSubLabels,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = if (groupSubLabels) {
-                            Icons.Outlined.AccountTree
-                        } else {
-                            Icons.AutoMirrored.Outlined.FormatListBulleted
-                        },
-                        contentDescription = stringResource(
-                            if (groupSubLabels) {
-                                R.string.detailedSubLabelsMode
-                            } else {
-                                R.string.groupedSubLabelsMode
-                            }
-                        ),
-                        tint = if (groupSubLabels) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-
-            LabelSelector(
-                labels = labels,
-                selectedLabels = selectedLabels,
-                onLabelsChanged = onLabelsChanged
-            )
-
-            NextIconButton(
-                onClick = onNextClick,
-                isEnabled = isNextEnabled
+            Icon(
+                imageVector = if (groupSubLabels) {
+                    Icons.Outlined.AccountTree
+                } else {
+                    Icons.AutoMirrored.Outlined.FormatListBulleted
+                },
+                contentDescription = stringResource(
+                    if (groupSubLabels) {
+                        R.string.detailedSubLabelsMode
+                    } else {
+                        R.string.groupedSubLabelsMode
+                    }
+                ),
+                tint = if (groupSubLabels) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                modifier = Modifier.size(20.dp)
             )
         }
     }
