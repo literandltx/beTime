@@ -2,11 +2,13 @@ package com.literandltx.betime.ui.screens.activity.widgets.donut
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import com.literandltx.betime.R
 import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.data.model.TimerRecord
@@ -158,26 +161,6 @@ fun DonutContainer(
     }
 }
 
-private fun aggregateSubLabels(
-    stats: Map<Label?, Int>,
-    allLabels: List<Label>
-): Map<Label?, Int> {
-    val labelsById = allLabels.associateBy { it.id } +
-            stats.keys.filterNotNull().associateBy { it.id }
-
-    val aggregated = mutableMapOf<Label?, Int>()
-    for ((label, duration) in stats) {
-        val parentId = label?.parentId
-        val targetLabel = if (parentId != null) {
-            labelsById[parentId] ?: label
-        } else {
-            label
-        }
-        aggregated[targetLabel] = (aggregated[targetLabel] ?: 0) + duration
-    }
-    return aggregated
-}
-
 @Composable
 private fun DonutContent(
     stats: Map<Label?, Int>,
@@ -188,12 +171,15 @@ private fun DonutContent(
 ) {
     val hasData = stats.isNotEmpty() && stats.values.any { it > 0 }
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .padding(top = 4.dp),
         contentAlignment = Alignment.Center
     ) {
+        val donutSize = min(maxWidth, maxHeight) * 0.72f
+        val statsHeight = maxHeight * 0.26f
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -201,24 +187,27 @@ private fun DonutContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            val layoutStats: Map<Label?, Int> = if (hasData) stats else mapOf(null to 1)
-
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f),
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                DonutElement(layoutStats)
+                DonutElement(
+                    stats = if (hasData) stats else mapOf(null to 1),
+                    modifier = Modifier.size(donutSize)
+                )
             }
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .height(statsHeight)
+                    .padding(horizontal = 8.dp, vertical = 0.dp),
+                contentAlignment = Alignment.Center
             ) {
                 StatsList(
-                    stats = layoutStats,
+                    stats = if (hasData) stats else mapOf(null to 1),
                     initialShowPercentage = initialShowPercentage,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -269,6 +258,27 @@ private fun DonutContent(
             )
         }
     }
+}
+
+private fun aggregateSubLabels(
+    stats: Map<Label?, Int>,
+    allLabels: List<Label>
+): Map<Label?, Int> {
+    val labelsById = allLabels.associateBy { it.id } +
+            stats.keys.filterNotNull().associateBy { it.id }
+
+    val aggregated = mutableMapOf<Label?, Int>()
+    for ((label, duration) in stats) {
+        val parentId = label?.parentId
+        val targetLabel = if (parentId != null) {
+            labelsById[parentId] ?: label
+        } else {
+            label
+        }
+        aggregated[targetLabel] = (aggregated[targetLabel] ?: 0) + duration
+    }
+
+    return aggregated
 }
 
 @Preview(showBackground = true, name = "Donut Container Theme Preview")

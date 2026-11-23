@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.AccountTree
-import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -93,7 +93,7 @@ fun DonutHeader(
                         imageVector = if (groupSubLabels) {
                             Icons.Outlined.AccountTree
                         } else {
-                            Icons.Outlined.FormatListBulleted
+                            Icons.AutoMirrored.Outlined.FormatListBulleted
                         },
                         contentDescription = stringResource(
                             if (groupSubLabels) {
