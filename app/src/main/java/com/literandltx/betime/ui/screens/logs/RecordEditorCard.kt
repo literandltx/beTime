@@ -88,7 +88,8 @@ fun EditorRecordCard(
     onConfirm: (durationSeconds: Int, startTimestamp: Long, labelId: Int?) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
-    shape: Shape = MaterialTheme.shapes.large
+    shape: Shape = MaterialTheme.shapes.large,
+    force24Hour: Boolean? = null
 ) {
     var textFieldValue by remember(initialValueSeconds) {
         val initialMinutes = if (initialValueSeconds > 0) (initialValueSeconds / 60).toString() else ""
@@ -212,6 +213,7 @@ fun EditorRecordCard(
                         hasDateTime = false
                         selectedTimestamp = UNSPECIFIED_TIMESTAMP
                     },
+                    force24Hour = force24Hour,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -284,12 +286,16 @@ fun EditorDateTimePicker(
     hasDateTime: Boolean,
     onDateTimeSelected: (Long) -> Unit,
     onClearDateTime: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    force24Hour: Boolean? = null
 ) {
     val context = LocalContext.current
     val locale = LocalLocale.current
-    val sdf = remember(locale) { SimpleDateFormat("MMM d, yyyy, h:mm:ss a", locale.platformLocale) }
-    val is24Hour = remember(context) { DateFormat.is24HourFormat(context) }
+    val is24Hour = remember(context, force24Hour) {
+        force24Hour ?: DateFormat.is24HourFormat(context)
+    }
+    val pattern = if (is24Hour) "MMM d, yyyy, HH:mm:ss" else "MMM d, yyyy, h:mm:ss a"
+    val sdf = remember(locale, pattern) { SimpleDateFormat(pattern, locale.platformLocale) }
 
     val baseMillis = if (selectedTimestamp > UNSPECIFIED_TIMESTAMP) {
         selectedTimestamp
@@ -302,7 +308,7 @@ fun EditorDateTimePicker(
     var pendingMillis by remember { mutableLongStateOf(baseMillis) }
 
     val showDateTimeLabel = !isUncertain || hasDateTime
-    val labelText = if (showDateTimeLabel) sdf.format(Date(baseMillis)) else "No date / time"
+    val labelText = if (showDateTimeLabel) sdf.format(Date(baseMillis)) else stringResource(R.string.noDateTime)
     val textColor = if (showDateTimeLabel) {
         MaterialTheme.colorScheme.primary
     } else {
@@ -333,7 +339,7 @@ fun EditorDateTimePicker(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Clear,
-                    contentDescription = "Clear date and time",
+                    contentDescription = stringResource(R.string.clearDateTimeAction),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp)
                 )
@@ -429,7 +435,7 @@ private fun EditorTimeDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Select time",
+                    text = stringResource(R.string.selectTimeTitle),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
@@ -457,7 +463,13 @@ private fun EditorTimeDialog(
                             } else {
                                 Icons.Outlined.Keyboard
                             },
-                            contentDescription = null
+                            contentDescription = stringResource(
+                                if (showKeyboardInput) {
+                                    R.string.switchToClockInputAction
+                                } else {
+                                    R.string.switchToKeyboardInputAction
+                                }
+                            )
                         )
                     }
 
@@ -483,40 +495,6 @@ private fun EditorTimeDialog(
             }
         }
     }
-}
-
-private fun localMillisToUtcStartOfDay(localMillis: Long): Long {
-    val localCal = Calendar.getInstance().apply { timeInMillis = localMillis }
-    return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-        clear()
-        set(
-            localCal.get(Calendar.YEAR),
-            localCal.get(Calendar.MONTH),
-            localCal.get(Calendar.DAY_OF_MONTH)
-        )
-    }.timeInMillis
-}
-
-private fun applyUtcDateToLocalMillis(baseLocalMillis: Long, selectedUtcMillis: Long): Long {
-    val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-        timeInMillis = selectedUtcMillis
-    }
-    return Calendar.getInstance().apply {
-        timeInMillis = baseLocalMillis
-        set(Calendar.YEAR, utcCal.get(Calendar.YEAR))
-        set(Calendar.MONTH, utcCal.get(Calendar.MONTH))
-        set(Calendar.DAY_OF_MONTH, utcCal.get(Calendar.DAY_OF_MONTH))
-    }.timeInMillis
-}
-
-private fun applyTimeToLocalMillis(baseMillis: Long, hour: Int, minute: Int): Long {
-    return Calendar.getInstance().apply {
-        timeInMillis = baseMillis
-        set(Calendar.HOUR_OF_DAY, hour)
-        set(Calendar.MINUTE, minute)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
 }
 
 @Composable
@@ -588,6 +566,40 @@ fun EditorLabelPicker(
             }
         }
     }
+}
+
+private fun localMillisToUtcStartOfDay(localMillis: Long): Long {
+    val localCal = Calendar.getInstance().apply { timeInMillis = localMillis }
+    return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        clear()
+        set(
+            localCal.get(Calendar.YEAR),
+            localCal.get(Calendar.MONTH),
+            localCal.get(Calendar.DAY_OF_MONTH)
+        )
+    }.timeInMillis
+}
+
+private fun applyUtcDateToLocalMillis(baseLocalMillis: Long, selectedUtcMillis: Long): Long {
+    val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        timeInMillis = selectedUtcMillis
+    }
+    return Calendar.getInstance().apply {
+        timeInMillis = baseLocalMillis
+        set(Calendar.YEAR, utcCal.get(Calendar.YEAR))
+        set(Calendar.MONTH, utcCal.get(Calendar.MONTH))
+        set(Calendar.DAY_OF_MONTH, utcCal.get(Calendar.DAY_OF_MONTH))
+    }.timeInMillis
+}
+
+private fun applyTimeToLocalMillis(baseMillis: Long, hour: Int, minute: Int): Long {
+    return Calendar.getInstance().apply {
+        timeInMillis = baseMillis
+        set(Calendar.HOUR_OF_DAY, hour)
+        set(Calendar.MINUTE, minute)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
 }
 
 private val sampleLabels = listOf(
