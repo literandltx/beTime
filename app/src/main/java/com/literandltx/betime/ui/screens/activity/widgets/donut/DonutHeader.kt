@@ -58,14 +58,14 @@ fun DonutHeader(
 ) {
     val hasSubLabels = remember(labels) { labels.any { it.parentId != null } }
 
-    Box(
+    Row(
         modifier = modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         PreviousIconButton(
             onClick = onPrevClick,
-            isEnabled = isPrevEnabled,
-            modifier = Modifier.align(Alignment.CenterStart)
+            isEnabled = isPrevEnabled
         )
 
         RangeSelectorButton(
@@ -74,13 +74,11 @@ fun DonutHeader(
             customStartDate = customStartDate,
             customEndDate = customEndDate,
             onClick = onRangeClick,
-            modifier = Modifier.align(Alignment.Center)
+            modifier = Modifier.weight(1f, fill = false)
         )
 
         Row(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 4.dp),
+            modifier = Modifier.padding(end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {

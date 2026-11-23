@@ -287,10 +287,28 @@ fun DonutContainerPreview(
     @PreviewParameter(HeaderPreviewProvider::class) state: HeaderPreviewState
 ) {
     val focusLabel = Label(id = 1, name = "Focus", colorArgb = 0xFFFF5722.toInt(), orderIndex = 0)
+    val deepWorkSubLabel = Label(
+        id = 11,
+        parentId = 1,
+        name = "Deep work",
+        colorArgb = 0xFFE64A19.toInt(),
+        orderIndex = 0
+    )
     val breakLabel = Label(id = 2, name = "Break", colorArgb = 0xFF4CAF50.toInt(), orderIndex = 1)
-    val chillLabel = Label(id = 3, name = "Chill", colorArgb = 0xFFFFFF00.toInt(), orderIndex = 2)
+    val chillLabel = Label(id = 3, name = "Chill", colorArgb = 0xFFFFC107.toInt(), orderIndex = 2)
+    val workLabel = Label(id = 4, name = "Work", colorArgb = 0xFF2196F3.toInt(), orderIndex = 3)
+    val restLabel = Label(id = 5, name = "Rest", colorArgb = 0xFF9C27B0.toInt(), orderIndex = 4)
+    val walkingLabel = Label(id = 6, name = "Walking", colorArgb = 0xFF00BCD4.toInt(), orderIndex = 5)
 
-    val mockLabels = listOf(focusLabel, breakLabel, chillLabel)
+    val mockLabels = listOf(
+        focusLabel,
+        deepWorkSubLabel,
+        breakLabel,
+        chillLabel,
+        workLabel,
+        restLabel,
+        walkingLabel
+    )
     val now = System.currentTimeMillis()
 
     val mockRecords = listOf(
@@ -299,16 +317,32 @@ fun DonutContainerPreview(
             label = focusLabel
         ),
         TimerRecordDetails(
-            record = TimerRecord(id = 2, value = 3600, startTimestamp = now),
+            record = TimerRecord(id = 2, value = 2400, startTimestamp = now),
+            label = deepWorkSubLabel
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(id = 3, value = 3600, startTimestamp = now),
             label = breakLabel
         ),
         TimerRecordDetails(
-            record = TimerRecord(id = 3, value = 1800, startTimestamp = now),
+            record = TimerRecord(id = 4, value = 1800, startTimestamp = now),
             label = chillLabel
         ),
         TimerRecordDetails(
-            record = TimerRecord(id = 4, value = 900, startTimestamp = now),
+            record = TimerRecord(id = 5, value = 900, startTimestamp = now),
             label = null
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(id = 6, value = 900, startTimestamp = now),
+            label = workLabel
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(id = 7, value = 900, startTimestamp = now),
+            label = restLabel
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(id = 8, value = 900, startTimestamp = now),
+            label = walkingLabel
         )
     )
 
@@ -332,36 +366,50 @@ fun DonutContainerPreview(
 @Preview(showBackground = true, name = "Donut Container Date Format Preview")
 @Composable
 fun DonutContainerDatePreview() {
-    MaterialTheme {
-        Surface {
-            val labelToday = Label(id = 1, name = "Today", colorArgb = 0xFFFF5722.toInt(), orderIndex = 0)
-            val labelDaysAgo = Label(id = 2, name = "2 Days Ago", colorArgb = Color.Green.toArgb(), orderIndex = 1)
-            val labelLastWeek = Label(id = 3, name = "Last Week", colorArgb = Color.Blue.toArgb(), orderIndex = 2)
-            val labelLastMonth = Label(id = 4, name = "Last Month", colorArgb = Color.Magenta.toArgb(), orderIndex = 3)
+    val labelToday = Label(id = 1, name = "Today", colorArgb = 0xFFFF5722.toInt(), orderIndex = 0)
+    val subLabelToday = Label(
+        id = 11,
+        parentId = 1,
+        name = "Sub Today",
+        colorArgb = 0xFFFF8A65.toInt(),
+        orderIndex = 0
+    )
+    val labelDaysAgo = Label(id = 2, name = "2 Days Ago", colorArgb = Color.Green.toArgb(), orderIndex = 1)
+    val labelLastWeek = Label(id = 3, name = "Last Week", colorArgb = Color.Blue.toArgb(), orderIndex = 2)
+    val labelLastMonth = Label(id = 4, name = "Last Month", colorArgb = Color.Magenta.toArgb(), orderIndex = 3)
 
-            val mockLabels = listOf(labelToday, labelDaysAgo, labelLastWeek, labelLastMonth)
-            val now = System.currentTimeMillis()
-            val dayInMillis = 24L * 60L * 60L * 1000L
+    val mockLabels = listOf(labelToday, subLabelToday, labelDaysAgo, labelLastWeek, labelLastMonth)
+    val now = System.currentTimeMillis()
+    val dayInMillis = 24L * 60L * 60L * 1000L
 
-            val mockRecords = listOf(
-                TimerRecordDetails(
-                    record = TimerRecord(id = 1, value = 3600, startTimestamp = now),
-                    label = labelToday
-                ),
-                TimerRecordDetails(
-                    record = TimerRecord(id = 2, value = 5400, startTimestamp = now - (2 * dayInMillis)),
-                    label = labelDaysAgo
-                ),
-                TimerRecordDetails(
-                    record = TimerRecord(id = 3, value = 7200, startTimestamp = now - (8 * dayInMillis)),
-                    label = labelLastWeek
-                ),
-                TimerRecordDetails(
-                    record = TimerRecord(id = 4, value = 9600, startTimestamp = now - (35 * dayInMillis)),
-                    label = labelLastMonth
-                )
-            )
+    val mockRecords = listOf(
+        TimerRecordDetails(
+            record = TimerRecord(id = 1, value = 3600, startTimestamp = now),
+            label = labelToday
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(id = 2, value = 1800, startTimestamp = now),
+            label = subLabelToday
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(id = 3, value = 5400, startTimestamp = now - (2 * dayInMillis)),
+            label = labelDaysAgo
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(id = 4, value = 7200, startTimestamp = now - (8 * dayInMillis)),
+            label = labelLastWeek
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(id = 5, value = 9600, startTimestamp = now - (35 * dayInMillis)),
+            label = labelLastMonth
+        )
+    )
 
+    TimerTheme {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.background
+        ) {
             Box(modifier = Modifier.padding(16.dp)) {
                 DonutContainer(
                     labels = mockLabels,
