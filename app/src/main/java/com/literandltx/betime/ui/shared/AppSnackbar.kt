@@ -1,12 +1,10 @@
 package com.literandltx.betime.ui.shared
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarData
@@ -18,28 +16,25 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.literandltx.betime.R
 import com.literandltx.betime.data.preferences.AppThemeMode
 import com.literandltx.betime.data.preferences.AppThemeModeProvider
+import com.literandltx.betime.ui.theme.CardShape
 import com.literandltx.betime.ui.theme.TimerTheme
 
 @Composable
-fun CustomSnackbar(
+fun AppSnackbar(
     snackbarData: SnackbarData,
     modifier: Modifier = Modifier
 ) {
-    val containerColor = MaterialTheme.colorScheme.inverseSurface
-    val contentColor = MaterialTheme.colorScheme.surface
-
     Snackbar(
-        modifier = modifier.padding(16.dp),
-        shape = RoundedCornerShape(12.dp),
-        containerColor = containerColor,
-        contentColor = contentColor,
+        modifier = modifier.padding(dimensionResource(R.dimen.padding_content_horizontal)),
+        shape = CardShape,
+        containerColor = MaterialTheme.colorScheme.inverseSurface,
+        contentColor = MaterialTheme.colorScheme.inverseOnSurface,
         action = {
             snackbarData.visuals.actionLabel?.let { actionLabel ->
                 TextButton(
@@ -48,8 +43,7 @@ fun CustomSnackbar(
                     Text(
                         text = actionLabel,
                         color = MaterialTheme.colorScheme.inversePrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
+                        style = MaterialTheme.typography.labelMedium
                     )
                 }
             }
@@ -58,14 +52,13 @@ fun CustomSnackbar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .padding(vertical = dimensionResource(R.dimen.padding_small)),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = snackbarData.visuals.message,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.inverseOnSurface
             )
         }
@@ -74,7 +67,7 @@ fun CustomSnackbar(
 
 @Preview(showBackground = true)
 @Composable
-private fun CustomSnackbarPreview(
+private fun AppSnackbarPreview(
     @PreviewParameter(AppThemeModeProvider::class) themeMode: AppThemeMode
 ) {
     TimerTheme(themeMode = themeMode) {
@@ -83,13 +76,13 @@ private fun CustomSnackbarPreview(
             color = MaterialTheme.colorScheme.background
         ) {
             Column {
-                CustomSnackbar(
+                AppSnackbar(
                     snackbarData = createMockSnackbarData(
                         message = "Record deleted",
                         actionLabel = "Undo"
                     )
                 )
-                CustomSnackbar(
+                AppSnackbar(
                     snackbarData = createMockSnackbarData(
                         message = "CSV exported successfully"
                     )

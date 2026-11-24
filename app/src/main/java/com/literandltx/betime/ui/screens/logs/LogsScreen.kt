@@ -48,7 +48,7 @@ import com.literandltx.betime.data.model.TimerRecordDetails
 import com.literandltx.betime.data.preferences.AppThemeMode
 import com.literandltx.betime.data.preferences.AppThemeModeProvider
 import com.literandltx.betime.ui.AppViewModelProvider
-import com.literandltx.betime.ui.shared.CustomSnackbar
+import com.literandltx.betime.ui.shared.AppSnackbar
 import com.literandltx.betime.ui.theme.TimerTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -179,7 +179,7 @@ fun LogsScreenContent(
             },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
-                CustomSnackbar(snackbarData = data)
+                AppSnackbar(snackbarData = data)
             }
         },
         floatingActionButton = {

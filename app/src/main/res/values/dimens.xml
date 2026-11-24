@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="navigation_bar_height">80.dp</dimen>
-    <dimen name="navigation_bar_hidden_padding">25.dp</dimen>
+    <dimen name="navigation_bar_hidden_padding">24.dp</dimen>
 
     <dimen name="standard_button_size">36.dp</dimen>
     <dimen name="standard_icon_size">18.dp</dimen>

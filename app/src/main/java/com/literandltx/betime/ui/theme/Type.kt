@@ -35,6 +35,6 @@ val Typography = Typography(
     bodyMedium = BaseSans.copy(fontSize = 12.sp),
     bodySmall = BaseSans.copy(fontWeight = FontWeight.Light, fontSize = 10.sp),
 
-    labelMedium = BaseSans.copy(fontSize = 14.sp),
+    labelMedium = BaseSans.copy(fontWeight = FontWeight.Medium, fontSize = 14.sp),
     labelSmall = BaseSans.copy(fontWeight = FontWeight.Light, fontSize = 12.sp)
 )
