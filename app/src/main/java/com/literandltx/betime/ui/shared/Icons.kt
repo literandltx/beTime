@@ -34,15 +34,15 @@ fun LabelIcon(
 }
 @Composable
 fun DeleteIcon(
-    iconScale: Float,
-    alphaAnim: Float,
     modifier: Modifier = Modifier,
+    iconScale: Float = 1f,
+    alphaAnim: Float = 1f,
     contentDescription: String? = null
 ) {
     Icon(
         imageVector = Icons.Outlined.Delete,
         contentDescription = contentDescription,
-        tint = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = alphaAnim),
+        tint = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = alphaAnim.coerceIn(0f, 1f)),
         modifier = modifier.scale(iconScale)
     )
 }
@@ -77,7 +77,7 @@ fun HourglassIcon(
 }
 
 @Composable
-fun ReorderHandle(
+fun ReorderHandleIcon(
     modifier: Modifier = Modifier,
     contentDescription: String? = null
 ) {
