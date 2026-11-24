@@ -205,7 +205,7 @@ fun LabelIconButton(
         modifier = modifier.size(dimensionResource(R.dimen.standard_button_size))
     ) {
         LabelIcon(
-            color = label?.composeColor,
+            tint = label?.composeColor,
             contentDescription = contentDescription
         )
     }
@@ -227,7 +227,7 @@ fun LabelIconTextButton(
         )
     ) {
         LabelIcon(
-            color = label?.composeColor,
+            tint = label?.composeColor,
             contentDescription = contentDescription
         )
         Spacer(modifier = Modifier.width(8.dp))

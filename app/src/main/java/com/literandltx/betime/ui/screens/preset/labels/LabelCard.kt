@@ -104,7 +104,7 @@ fun LabelCard(
             }
             ReorderHandleIcon(modifier = dragModifier)
             LabelIcon(
-                color = label.composeColor,
+                tint = label.composeColor,
                 modifier = Modifier.padding(
                     horizontal = dimensionResource(R.dimen.padding_standard)
                 )

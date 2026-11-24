@@ -88,7 +88,7 @@ fun StatsListItem(
             )
         }
 
-        LabelIcon(color = label?.composeColor)
+        LabelIcon(tint = label?.composeColor)
 
         Spacer(modifier = Modifier.width(6.dp))
 
