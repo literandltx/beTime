@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocalOffer
 import androidx.compose.material3.Card
@@ -33,8 +35,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.literandltx.betime.R
 import com.literandltx.betime.ui.shared.CloseIconButton
@@ -55,14 +55,8 @@ fun EditorLabelCard(
     placeholder: String = stringResource(R.string.newLabelPlaceholder),
     shape: Shape = MaterialTheme.shapes.large
 ) {
-    var textFieldValue by remember(initialName) {
-        mutableStateOf(
-            TextFieldValue(
-                text = initialName,
-                selection = TextRange(initialName.length)
-            )
-        )
-    }
+    val nameState = rememberTextFieldState(initialName)
+
     var selectedColor by remember(initialColor) {
         mutableStateOf(initialColor)
     }
@@ -70,6 +64,12 @@ fun EditorLabelCard(
     val focusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+
+    LaunchedEffect(initialName) {
+        if (nameState.text.toString() != initialName) {
+            nameState.setTextAndPlaceCursorAtEnd(initialName)
+        }
+    }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -82,6 +82,10 @@ fun EditorLabelCard(
             delay(50.milliseconds)
             bringIntoViewRequester.bringIntoView()
         }
+    }
+
+    val submitForm = {
+        onConfirm(nameState.text.toString().trim(), selectedColor, parentId)
     }
 
     Card(
@@ -115,18 +119,17 @@ fun EditorLabelCard(
                 )
                 Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_standard)))
                 EditableTextField(
-                    value = textFieldValue,
-                    onValueChange = { textFieldValue = it },
+                    state = nameState,
                     placeholder = placeholder,
                     cursorColor = selectedColor,
-                    onConfirm = { onConfirm(textFieldValue.text.trim(), selectedColor, parentId) },
+                    onConfirm = submitForm,
                     modifier = Modifier
                         .weight(1f)
                         .focusRequester(focusRequester)
                 )
                 ConfirmIconButton(
-                    onClick = { onConfirm(textFieldValue.text.trim(), selectedColor, parentId) },
-                    isEnabled = textFieldValue.text.isNotBlank(),
+                    onClick = submitForm,
+                    isEnabled = nameState.text.isNotBlank(),
                     contentDescription = stringResource(R.string.confirmAction)
                 )
                 CloseIconButton(
