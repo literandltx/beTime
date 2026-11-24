@@ -212,24 +212,6 @@ fun ActivityScreenContent(
     }
 }
 
-@Composable
-fun ActivityHeader(
-    modifier: Modifier = Modifier,
-    onEditClick: () -> Unit = {}
-) {
-    SectionHeader(
-        title = stringResource(R.string.activityHeaderTitle),
-        modifier = modifier
-    ) {
-        EditIconButton(onClick = onEditClick)
-    }
-
-    HorizontalDivider(
-        thickness = 1.dp,
-        color = MaterialTheme.colorScheme.outlineVariant
-    )
-}
-
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 fun ActivityScreenContentPreview() {

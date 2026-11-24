@@ -37,21 +37,16 @@ fun LogsHeader(
     onExportCsv: () -> Unit = {},
     onImportCsv: () -> Unit = {}
 ) {
-    Column(modifier = modifier) {
-        SectionHeader(title = stringResource(R.string.historyHeaderTitle)) {
-            if (showAddButton) {
-                AddIconButton(onClick = onStartAddClick)
-            }
-            LogsMoreOptionsDropdown(
-                onExportCsv = onExportCsv,
-                onImportCsv = onImportCsv
-            )
+    SectionHeader(
+        title = stringResource(R.string.historyHeaderTitle),
+        modifier = modifier
+    ) {
+        if (showAddButton) {
+            AddIconButton(onClick = onStartAddClick)
         }
-
-        HorizontalDivider(
-            modifier = Modifier.padding(vertical = dimensionResource(R.dimen.padding_standard)),
-            thickness = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant
+        LogsMoreOptionsDropdown(
+            onExportCsv = onExportCsv,
+            onImportCsv = onImportCsv
         )
     }
 }
