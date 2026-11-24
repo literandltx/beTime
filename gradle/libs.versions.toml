@@ -18,6 +18,7 @@ reorderable = "3.1.0"
 room3Compiler = "3.0.3"
 room3Runtime = "3.0.3"
 animationCore = "1.13.0"
+runtime = "1.13.0"
 
 [libraries]
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
@@ -45,6 +46,7 @@ androidx-compose-foundation = { group = "androidx.compose.foundation", name = "f
 material-kolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 androidx-compose-animation-core = { group = "androidx.compose.animation", name = "animation-core", version.ref = "animationCore" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
