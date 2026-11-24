@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Clear
@@ -55,9 +58,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -91,14 +92,14 @@ fun EditorRecordCard(
     shape: Shape = MaterialTheme.shapes.large,
     force24Hour: Boolean? = null
 ) {
-    var textFieldValue by remember(initialValueSeconds) {
-        val initialMinutes = if (initialValueSeconds > 0) (initialValueSeconds / 60).toString() else ""
-        mutableStateOf(
-            TextFieldValue(
-                text = initialMinutes,
-                selection = TextRange(initialMinutes.length)
-            )
-        )
+    val initialMinutes = if (initialValueSeconds > 0) (initialValueSeconds / 60).toString() else ""
+    val durationState = rememberTextFieldState(initialMinutes)
+
+    LaunchedEffect(initialValueSeconds) {
+        val updatedMinutes = if (initialValueSeconds > 0) (initialValueSeconds / 60).toString() else ""
+        if (durationState.text.toString() != updatedMinutes) {
+            durationState.setTextAndPlaceCursorAtEnd(updatedMinutes)
+        }
     }
 
     var selectedTimestamp by remember(initialStartTimestamp) {
@@ -126,7 +127,7 @@ fun EditorRecordCard(
         }
     }
 
-    val minsValue = textFieldValue.text.toIntOrNull() ?: 0
+    val minsValue = durationState.text.toString().toIntOrNull() ?: 0
     val isConfirmEnabled = if (isUncertainSelected) true else minsValue > 0
 
     val focusRequester = remember { FocusRequester() }
@@ -187,8 +188,7 @@ fun EditorRecordCard(
             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_standard))
         ) {
             EditorDurationInput(
-                textFieldValue = textFieldValue,
-                onValueChange = { textFieldValue = it },
+                state = durationState,
                 placeholder = placeholder,
                 isConfirmEnabled = isConfirmEnabled,
                 focusRequester = focusRequester,
@@ -229,8 +229,7 @@ fun EditorRecordCard(
 
 @Composable
 private fun EditorDurationInput(
-    textFieldValue: TextFieldValue,
-    onValueChange: (TextFieldValue) -> Unit,
+    state: TextFieldState,
     placeholder: String,
     isConfirmEnabled: Boolean,
     focusRequester: FocusRequester,
@@ -243,13 +242,14 @@ private fun EditorDurationInput(
         verticalAlignment = Alignment.CenterVertically
     ) {
         EditableTextField(
-            value = textFieldValue,
-            onValueChange = {
-                if (it.text.isEmpty() || it.text.toLongOrNull() != null) {
-                    onValueChange(it)
+            state = state,
+            placeholder = placeholder,
+            inputTransformation = {
+                val text = asCharSequence().toString()
+                if (text.isNotEmpty() && text.toLongOrNull() == null) {
+                    revertAllChanges()
                 }
             },
-            placeholder = placeholder,
             cursorColor = MaterialTheme.colorScheme.primary,
             keyboardType = KeyboardType.Number,
             onConfirm = onConfirm,

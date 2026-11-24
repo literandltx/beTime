@@ -34,7 +34,7 @@ import com.literandltx.betime.data.preferences.AppThemeMode
 import com.literandltx.betime.data.preferences.AppThemeModeProvider
 import com.literandltx.betime.ui.shared.LabelIcon
 import com.literandltx.betime.ui.shared.OptionsMenu
-import com.literandltx.betime.ui.shared.ReorderHandle
+import com.literandltx.betime.ui.shared.ReorderHandleIcon
 import com.literandltx.betime.ui.theme.TimerTheme
 
 @Composable
@@ -102,9 +102,9 @@ fun LabelCard(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
             }
-            ReorderHandle(modifier = dragModifier)
+            ReorderHandleIcon(modifier = dragModifier)
             LabelIcon(
-                color = label.composeColor,
+                tint = label.composeColor,
                 modifier = Modifier.padding(
                     horizontal = dimensionResource(R.dimen.padding_standard)
                 )

@@ -17,7 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.literandltx.betime.R
-import com.literandltx.betime.ui.shared.ReorderHandle
+import com.literandltx.betime.ui.shared.ReorderHandleIcon
 
 @Composable
 fun WidgetContainer(
@@ -54,7 +54,7 @@ fun WidgetContainer(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ReorderHandle(
+                    ReorderHandleIcon(
                         modifier = dragModifier.padding(end = 8.dp)
                     )
 

@@ -28,6 +28,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.literandltx.betime.R
+import com.literandltx.betime.ui.shared.DeleteIcon
 
 @Composable
 fun TimerCard(
@@ -138,6 +139,16 @@ private fun BoxScope.TimerDeleteBadge(
     modifier: Modifier = Modifier
 ) {
     val badgeOffset = dimensionResource(R.dimen.timer_delete_badge_offset)
+    val circleColor = if (isActive) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+    val borderColor = if (isActive) {
+        primaryColor.copy(alpha = 0.4f)
+    } else {
+        outlineColor
+    }
 
     Box(
         contentAlignment = Alignment.Center,
@@ -145,24 +156,14 @@ private fun BoxScope.TimerDeleteBadge(
             .align(Alignment.TopEnd)
             .offset(x = badgeOffset, y = -badgeOffset)
             .size(dimensionResource(R.dimen.timer_delete_badge_size))
-            .background(Color.Transparent, CircleShape)
             .clip(CircleShape)
+            .background(circleColor, CircleShape)
+            .border(1.dp, borderColor, CircleShape)
             .clickable(onClick = onDeleteClick)
     ) {
-        val overlayCircleColor = if (isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-        val overlayBorderColor = if (isActive) primaryColor.copy(alpha = 0.4f) else outlineColor
-        val overlayIconColor = if (isActive) primaryColor else MaterialTheme.colorScheme.onSurfaceVariant
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(overlayCircleColor, CircleShape)
-                .border(1.dp, overlayBorderColor, CircleShape)
-        )
-        Icon(
-            imageVector = Icons.Outlined.Delete,
+        DeleteIcon(
+            alphaAnim = 1f,
             contentDescription = stringResource(R.string.deleteAction),
-            tint = overlayIconColor,
             modifier = Modifier.padding(dimensionResource(R.dimen.timer_delete_badge_padding))
         )
     }

@@ -5,15 +5,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -21,9 +20,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import com.literandltx.betime.R
 import com.literandltx.betime.ui.shared.CloseIconButton
 import com.literandltx.betime.ui.shared.ConfirmIconButton
@@ -38,14 +35,14 @@ fun EditorTimerCard(
     placeholder: String = stringResource(R.string.timerValuePlaceholder),
     shape: Shape = MaterialTheme.shapes.large
 ) {
-    var textFieldValue by remember(initialValue) {
-        val initialValueString = if (initialValue == 0) "" else initialValue.toString()
-        mutableStateOf(
-            TextFieldValue(
-                text = initialValueString,
-                selection = TextRange(initialValueString.length)
-            )
-        )
+    val initialValueString = if (initialValue == 0) "" else initialValue.toString()
+    val timerState = rememberTextFieldState(initialValueString)
+
+    LaunchedEffect(initialValue) {
+        val updatedValueString = if (initialValue == 0) "" else initialValue.toString()
+        if (timerState.text.toString() != updatedValueString) {
+            timerState.setTextAndPlaceCursorAtEnd(updatedValueString)
+        }
     }
 
     val focusRequester = remember { FocusRequester() }
@@ -54,10 +51,12 @@ fun EditorTimerCard(
         focusRequester.requestFocus()
     }
 
+    val parsedValue = timerState.text.toString().toIntOrNull()
+    val isConfirmEnabled = timerState.text.isNotBlank() && parsedValue != null
+
     val submitForm = {
-        val value = textFieldValue.text.toIntOrNull()
-        if (textFieldValue.text.isNotBlank() && value != null) {
-            onConfirm(value)
+        if (isConfirmEnabled) {
+            onConfirm(parsedValue)
         }
     }
 
@@ -82,9 +81,14 @@ fun EditorTimerCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             EditableTextField(
-                value = textFieldValue,
-                onValueChange = { textFieldValue = it },
+                state = timerState,
                 placeholder = placeholder,
+                inputTransformation = {
+                    val text = asCharSequence().toString()
+                    if (text.isNotEmpty() && text.toIntOrNull() == null) {
+                        revertAllChanges()
+                    }
+                },
                 cursorColor = MaterialTheme.colorScheme.primary,
                 keyboardType = KeyboardType.Number,
                 onConfirm = submitForm,
@@ -95,7 +99,7 @@ fun EditorTimerCard(
             Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_standard)))
             ConfirmIconButton(
                 onClick = submitForm,
-                isEnabled = textFieldValue.text.isNotBlank() && textFieldValue.text.toIntOrNull() != null,
+                isEnabled = isConfirmEnabled,
                 contentDescription = stringResource(R.string.confirmAction)
             )
             CloseIconButton(

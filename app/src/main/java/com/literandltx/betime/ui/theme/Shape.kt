@@ -9,19 +9,18 @@ val DialogCornerRadius = 24.dp
 
 val ChipCornerRadius = 8.dp
 val BadgeCornerRadius = 50.dp
+val SmallElementCornerRadius = 6.dp
 
 val CardShape = RoundedCornerShape(CardCornerRadius)
 val DialogShape = RoundedCornerShape(DialogCornerRadius)
 val ChipShape = RoundedCornerShape(ChipCornerRadius)
 val BadgeShape = RoundedCornerShape(BadgeCornerRadius)
-
-val SmallElementCornerRadius = 6.dp
 val SmallElementShape = RoundedCornerShape(SmallElementCornerRadius)
 
 val Shapes = Shapes(
     extraSmall = RoundedCornerShape(4.dp),
-    small = RoundedCornerShape(50.dp),
-    medium = RoundedCornerShape(bottomStart = 16.dp, topEnd = 16.dp),
+    small = ChipShape,
+    medium = CardShape,
     large = RoundedCornerShape(16.dp),
-    extraLarge = RoundedCornerShape(28.dp)
+    extraLarge = DialogShape
 )

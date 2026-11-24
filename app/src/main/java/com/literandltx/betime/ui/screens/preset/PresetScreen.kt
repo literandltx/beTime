@@ -44,7 +44,7 @@ import com.literandltx.betime.ui.screens.preset.labels.LabelsContent
 import com.literandltx.betime.ui.screens.preset.labels.LabelsHeader
 import com.literandltx.betime.ui.screens.preset.timers.TimersContent
 import com.literandltx.betime.ui.screens.preset.timers.TimersHeader
-import com.literandltx.betime.ui.shared.CustomSnackbar
+import com.literandltx.betime.ui.shared.AppSnackbar
 import com.literandltx.betime.ui.theme.TimerTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -155,7 +155,7 @@ fun PresetContent(
             },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
-                CustomSnackbar(snackbarData = data)
+                AppSnackbar(snackbarData = data)
             }
         }
     ) { _ ->

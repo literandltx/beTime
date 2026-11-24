@@ -117,7 +117,7 @@ private fun RecordLabelBadge(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
     ) {
-        LabelIcon(color = label?.composeColor)
+        LabelIcon(tint = label?.composeColor)
         Text(
             text = label?.name ?: stringResource(R.string.noLabelMessage),
             style = MaterialTheme.typography.bodyLarge,

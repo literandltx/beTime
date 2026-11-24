@@ -584,7 +584,7 @@ internal fun TimerStartIndicator(
             contentAlignment = Alignment.TopCenter
         ) {
             HourglassIcon(
-                color = MaterialTheme.colorScheme.primary,
+                tint = MaterialTheme.colorScheme.primary,
                 contentDescription = null,
                 modifier = Modifier
                     .offset(y = (-60).dp)
