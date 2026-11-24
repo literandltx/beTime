@@ -157,19 +157,6 @@ fun SettingsScreenContent(
     }
 }
 
-@Composable
-private fun SettingsHeader() {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        SectionHeader(title = stringResource(R.string.settingsHeaderTitle))
-
-        HorizontalDivider(
-            modifier = Modifier.padding(vertical = 12.dp),
-            thickness = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppearanceSection(
