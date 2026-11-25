@@ -1,0 +1,47 @@
+name: F-Droid Release Build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag or ref to build (e.g. v1.0.0)"
+        required: false
+
+jobs:
+  reproducible-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - name: Cache Gradle Docker dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.gradle-docker
+          key: gradle-docker-${{ hashFiles('gradle/libs.versions.toml', '**/build.gradle.kts', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-docker-
+
+      - name: First build
+        run: ./build-fdroid.sh :app:assembleFossRelease
+
+      - name: Save first build artifact
+        run: cp app/build/outputs/apk/foss/release/*.apk /tmp/build1.apk
+
+      - name: Second build
+        run: ./build-fdroid.sh :app:assembleFossRelease
+
+      - name: Compare build hashes
+        run: |
+          set -euo pipefail
+          apk2=$(ls app/build/outputs/apk/foss/release/*.apk | head -n 1)
+          h1=$(sha256sum /tmp/build1.apk | cut -d' ' -f1)
+          h2=$(sha256sum "$apk2" | cut -d' ' -f1)
+          echo "Build 1: $h1"
+          echo "Build 2: $h2"
+          if [ "$h1" != "$h2" ]; then
+            echo "::error::Build is not reproducible"
+            exit 1
+          fi
