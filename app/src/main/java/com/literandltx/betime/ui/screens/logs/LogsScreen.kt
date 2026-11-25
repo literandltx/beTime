@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.literandltx.betime.R
+import com.literandltx.betime.data.model.DateTimePickMode
 import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.data.model.TimerRecord
 import com.literandltx.betime.data.model.TimerRecordDetails
@@ -227,12 +228,13 @@ fun LogsScreenContent(
                 isAdding = isAddingRecord,
                 editingRecordId = editingRecordId,
                 modifier = Modifier.weight(1f),
-                onConfirmAdd = { durationSeconds, startTimestamp, labelId ->
+                onConfirmAdd = { durationSeconds, startTimestamp, labelId, dateTimeMode ->
                     onAddClick(
                         TimerRecord(
                             value = durationSeconds,
                             startTimestamp = startTimestamp,
-                            labelId = labelId
+                            labelId = labelId,
+                            dateTimeMode = dateTimeMode
                         )
                     )
                     isAddingRecord = false

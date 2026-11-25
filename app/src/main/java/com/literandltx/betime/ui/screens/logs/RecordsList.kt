@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.literandltx.betime.R
+import com.literandltx.betime.data.model.DateTimePickMode
 import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.data.model.TimerRecord
 import com.literandltx.betime.data.model.TimerRecordDetails
@@ -34,7 +35,7 @@ fun RecordsList(
     labels: List<Label>,
     isAdding: Boolean,
     editingRecordId: Int?,
-    onConfirmAdd: (durationSeconds: Int, startTimestamp: Long, labelId: Int?) -> Unit,
+    onConfirmAdd: (durationSeconds: Int, startTimestamp: Long, labelId: Int?, dateTimeMode: DateTimePickMode) -> Unit,
     onCancelAdd: () -> Unit,
     onStartEdit: (TimerRecord) -> Unit,
     onConfirmEdit: (TimerRecord) -> Unit,
@@ -108,13 +109,15 @@ fun RecordsList(
                     initialValueSeconds = item.record.value,
                     initialStartTimestamp = item.record.startTimestamp,
                     initialLabelId = item.record.labelId,
+                    initialDateTimeMode = item.record.dateTimeMode,
                     labels = labels,
-                    onConfirm = { durationSeconds, startTimestamp, labelId ->
+                    onConfirm = { durationSeconds, startTimestamp, labelId, dateTimeMode ->
                         onConfirmEdit(
                             item.record.copy(
                                 value = durationSeconds,
                                 startTimestamp = startTimestamp,
-                                labelId = labelId
+                                labelId = labelId,
+                                dateTimeMode = dateTimeMode
                             )
                         )
                     },
@@ -167,7 +170,7 @@ private fun RecordsListPreview(
                     labels = sampleLabels,
                     isAdding = false,
                     editingRecordId = null,
-                    onConfirmAdd = { _, _, _ -> },
+                    onConfirmAdd = { _, _, _, _ -> },
                     onCancelAdd = {},
                     onStartEdit = {},
                     onConfirmEdit = {},
@@ -195,7 +198,7 @@ private fun RecordsListEditingPreview(
                     labels = sampleLabels,
                     isAdding = true,
                     editingRecordId = 2,
-                    onConfirmAdd = { _, _, _ -> },
+                    onConfirmAdd = { _, _, _, _ -> },
                     onCancelAdd = {},
                     onStartEdit = {},
                     onConfirmEdit = {},
@@ -223,7 +226,7 @@ private fun RecordsListEmptyPreview(
                     labels = sampleLabels,
                     isAdding = false,
                     editingRecordId = null,
-                    onConfirmAdd = { _, _, _ -> },
+                    onConfirmAdd = { _, _, _, _ -> },
                     onCancelAdd = {},
                     onStartEdit = {},
                     onConfirmEdit = {},

@@ -8,6 +8,12 @@ import androidx.room3.Index
 import androidx.room3.PrimaryKey
 import androidx.room3.Relation
 
+enum class DateTimePickMode {
+    DATE_AND_TIME,
+    DATE_ONLY,
+    TIME_ONLY
+}
+
 @Entity(
     tableName = "timer_records",
     foreignKeys = [
@@ -34,6 +40,9 @@ data class TimerRecord(
 
     @ColumnInfo(name = "label_id")
     val labelId: Int? = null,
+
+    @ColumnInfo(name = "date_time_mode")
+    val dateTimeMode: DateTimePickMode = DateTimePickMode.DATE_AND_TIME,
 )
 
 data class TimerRecordDetails(

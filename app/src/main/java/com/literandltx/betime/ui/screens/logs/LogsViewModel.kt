@@ -3,7 +3,10 @@ package com.literandltx.betime.ui.screens.logs
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.literandltx.betime.data.model.DateTimePickMode
+import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.data.model.TimerRecord
+import com.literandltx.betime.data.model.TimerRecordDetails
 import com.literandltx.betime.data.preferences.SettingsPreferences
 import com.literandltx.betime.data.repository.LabelsRepository
 import com.literandltx.betime.data.repository.TimerRecordRepository
@@ -17,8 +20,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class LogsUiState(
-    val labels: List<com.literandltx.betime.data.model.Label> = emptyList(),
-    val records: List<com.literandltx.betime.data.model.TimerRecordDetails> = emptyList(),
+    val labels: List<Label> = emptyList(),
+    val records: List<TimerRecordDetails> = emptyList(),
     val isFabEnabled: Boolean = false
 )
 
@@ -53,6 +56,22 @@ class LogsViewModel(
         viewModelScope.launch {
             timerRecordRepository.insert(timerRecord)
         }
+    }
+
+    fun insert(
+        durationSeconds: Int,
+        startTimestamp: Long,
+        labelId: Int?,
+        dateTimeMode: DateTimePickMode = DateTimePickMode.DATE_AND_TIME
+    ) {
+        insert(
+            TimerRecord(
+                value = durationSeconds,
+                startTimestamp = startTimestamp,
+                labelId = labelId,
+                dateTimeMode = dateTimeMode
+            )
+        )
     }
 
     fun update(timerRecord: TimerRecord) {

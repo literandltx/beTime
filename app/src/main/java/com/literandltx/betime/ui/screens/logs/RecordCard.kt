@@ -1,5 +1,6 @@
 package com.literandltx.betime.ui.screens.logs
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -23,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import com.literandltx.betime.R
+import com.literandltx.betime.data.model.DateTimePickMode
 import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.data.model.TimerRecord
 import com.literandltx.betime.data.model.TimerRecordDetails
@@ -40,6 +43,7 @@ fun RecordCard(
     timerRecordDetails: TimerRecordDetails,
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.large,
+    force24Hour: Boolean? = null,
     onEditClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
 ) {
@@ -65,6 +69,7 @@ fun RecordCard(
         ) {
             RecordCardInfo(
                 timerRecordDetails = timerRecordDetails,
+                force24Hour = force24Hour,
                 modifier = Modifier.weight(1f)
             )
             OptionsMenu(
@@ -78,6 +83,7 @@ fun RecordCard(
 @Composable
 private fun RecordCardInfo(
     timerRecordDetails: TimerRecordDetails,
+    force24Hour: Boolean?,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -102,7 +108,9 @@ private fun RecordCardInfo(
         }
 
         FormattedTimerText(
-            startTimestamp = timerRecordDetails.record.startTimestamp
+            startTimestamp = timerRecordDetails.record.startTimestamp,
+            dateTimeMode = timerRecordDetails.record.dateTimeMode,
+            force24Hour = force24Hour
         )
     }
 }
@@ -131,25 +139,39 @@ private fun RecordLabelBadge(
 @Composable
 private fun FormattedTimerText(
     startTimestamp: Long,
+    dateTimeMode: DateTimePickMode,
+    force24Hour: Boolean?,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val locale = LocalLocale.current
+    val is24Hour = remember(context, force24Hour) {
+        force24Hour ?: DateFormat.is24HourFormat(context)
+    }
 
-    val formattedTime = remember(startTimestamp, locale) {
+    val pattern = when (dateTimeMode) {
+        DateTimePickMode.DATE_AND_TIME -> if (is24Hour) "MMM d, yyyy, HH:mm:ss" else "MMM d, yyyy, h:mm:ss a"
+        DateTimePickMode.DATE_ONLY -> "MMM d, yyyy"
+        DateTimePickMode.TIME_ONLY -> if (is24Hour) "HH:mm" else "h:mm a"
+    }
+
+    val formattedTime = remember(startTimestamp, locale, pattern) {
         if (startTimestamp <= 0L) {
-            "No date / time"
+            ""
         } else {
-            val sdf = SimpleDateFormat("MMM d, yyyy, h:mm:ss a", locale.platformLocale)
+            val sdf = SimpleDateFormat(pattern, locale.platformLocale)
             sdf.format(Date(startTimestamp))
         }
     }
 
-    Text(
-        text = formattedTime,
-        modifier = modifier,
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-    )
+    if (formattedTime.isNotEmpty()) {
+        Text(
+            text = formattedTime,
+            modifier = modifier,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        )
+    }
 }
 
 @Preview(group = "Themes", showBackground = true)
@@ -162,7 +184,8 @@ private fun RecordCardPreview(
             id = 1,
             value = 145,
             startTimestamp = System.currentTimeMillis(),
-            labelId = 1
+            labelId = 1,
+            dateTimeMode = DateTimePickMode.DATE_AND_TIME
         ),
         label = Label(
             id = 1,
@@ -198,7 +221,8 @@ private fun RecordCardNoLabelPreview(
             id = 2,
             value = 1115,
             startTimestamp = 0L,
-            labelId = null
+            labelId = null,
+            dateTimeMode = DateTimePickMode.DATE_AND_TIME
         ),
         label = null
     )
