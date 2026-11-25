@@ -1,5 +1,6 @@
 package com.literandltx.betime.ui.screens.preset
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
@@ -80,6 +81,7 @@ fun PresetScreen(
 }
 
 @Composable
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 fun PresetContent(
     labels: List<Label>,
     timerOptions: List<TimerOption>,

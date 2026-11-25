@@ -1,5 +1,6 @@
 package com.literandltx.betime.ui.screens.logs
 
+import android.annotation.SuppressLint
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -115,6 +116,7 @@ fun LogsScreen(
 }
 
 @Composable
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 fun LogsScreenContent(
     uiState: LogsUiState,
     modifier: Modifier = Modifier,
