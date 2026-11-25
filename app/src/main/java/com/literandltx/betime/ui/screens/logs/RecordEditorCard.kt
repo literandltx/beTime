@@ -19,7 +19,9 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.LocalOffer
 import androidx.compose.material3.BasicAlertDialog
@@ -53,6 +55,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
@@ -63,12 +66,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.literandltx.betime.R
+import com.literandltx.betime.data.model.DateTimePickMode
 import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.data.preferences.AppThemeMode
 import com.literandltx.betime.data.preferences.AppThemeModeProvider
 import com.literandltx.betime.ui.shared.CloseIconButton
 import com.literandltx.betime.ui.shared.ConfirmIconButton
 import com.literandltx.betime.ui.shared.EditableTextField
+import com.literandltx.betime.ui.shared.GenericModal
 import com.literandltx.betime.ui.theme.SmallElementShape
 import com.literandltx.betime.ui.theme.TimerTheme
 import kotlinx.coroutines.delay
@@ -86,10 +91,11 @@ fun EditorRecordCard(
     initialStartTimestamp: Long,
     initialLabelId: Int?,
     labels: List<Label>,
-    onConfirm: (durationSeconds: Int, startTimestamp: Long, labelId: Int?) -> Unit,
+    onConfirm: (durationSeconds: Int, startTimestamp: Long, labelId: Int?, dateTimeMode: DateTimePickMode) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.large,
+    initialDateTimeMode: DateTimePickMode = DateTimePickMode.DATE_AND_TIME,
     force24Hour: Boolean? = null
 ) {
     val initialMinutes = if (initialValueSeconds > 0) (initialValueSeconds / 60).toString() else ""
@@ -107,6 +113,9 @@ fun EditorRecordCard(
     }
     var selectedLabelId by remember(initialLabelId) {
         mutableStateOf(initialLabelId)
+    }
+    var currentDateTimeMode by remember(initialDateTimeMode) {
+        mutableStateOf(initialDateTimeMode)
     }
 
     val selectedLabel = remember(labels, selectedLabelId) {
@@ -158,7 +167,7 @@ fun EditorRecordCard(
                 selectedTimestamp > UNSPECIFIED_TIMESTAMP -> selectedTimestamp
                 else -> System.currentTimeMillis()
             }
-            onConfirm(durationSeconds, finalTimestamp, selectedLabelId)
+            onConfirm(durationSeconds, finalTimestamp, selectedLabelId, currentDateTimeMode)
         }
     }
 
@@ -205,6 +214,8 @@ fun EditorRecordCard(
                     selectedTimestamp = selectedTimestamp,
                     isUncertain = isUncertainSelected,
                     hasDateTime = hasDateTime,
+                    dateTimeMode = currentDateTimeMode,
+                    onDateTimeModeChanged = { currentDateTimeMode = it },
                     onDateTimeSelected = { newTs ->
                         selectedTimestamp = newTs
                         hasDateTime = true
@@ -284,6 +295,8 @@ fun EditorDateTimePicker(
     selectedTimestamp: Long,
     isUncertain: Boolean,
     hasDateTime: Boolean,
+    dateTimeMode: DateTimePickMode,
+    onDateTimeModeChanged: (DateTimePickMode) -> Unit,
     onDateTimeSelected: (Long) -> Unit,
     onClearDateTime: () -> Unit,
     modifier: Modifier = Modifier,
@@ -294,18 +307,24 @@ fun EditorDateTimePicker(
     val is24Hour = remember(context, force24Hour) {
         force24Hour ?: DateFormat.is24HourFormat(context)
     }
-    val pattern = if (is24Hour) "MMM d, yyyy, HH:mm:ss" else "MMM d, yyyy, h:mm:ss a"
-    val sdf = remember(locale, pattern) { SimpleDateFormat(pattern, locale.platformLocale) }
+
+    var showModeChooser by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
 
     val baseMillis = if (selectedTimestamp > UNSPECIFIED_TIMESTAMP) {
         selectedTimestamp
     } else {
         System.currentTimeMillis()
     }
-
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showTimePicker by remember { mutableStateOf(false) }
     var pendingMillis by remember { mutableLongStateOf(baseMillis) }
+
+    val pattern = when (dateTimeMode) {
+        DateTimePickMode.DATE_AND_TIME -> if (is24Hour) "MMM d, yyyy, HH:mm:ss" else "MMM d, yyyy, h:mm:ss a"
+        DateTimePickMode.DATE_ONLY -> "MMM d, yyyy"
+        DateTimePickMode.TIME_ONLY -> if (is24Hour) "HH:mm" else "h:mm a"
+    }
+    val sdf = remember(locale, pattern) { SimpleDateFormat(pattern, locale.platformLocale) }
 
     val showDateTimeLabel = !isUncertain || hasDateTime
     val labelText = if (showDateTimeLabel) sdf.format(Date(baseMillis)) else stringResource(R.string.noDateTime)
@@ -313,6 +332,21 @@ fun EditorDateTimePicker(
         MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    fun startPickerForMode(mode: DateTimePickMode, sourceMillis: Long) {
+        onDateTimeModeChanged(mode)
+        pendingMillis = sourceMillis
+        when (mode) {
+            DateTimePickMode.DATE_AND_TIME, DateTimePickMode.DATE_ONLY -> {
+                showDatePicker = true
+                showTimePicker = false
+            }
+            DateTimePickMode.TIME_ONLY -> {
+                showDatePicker = false
+                showTimePicker = true
+            }
+        }
     }
 
     Row(
@@ -327,7 +361,7 @@ fun EditorDateTimePicker(
                 .clip(SmallElementShape)
                 .clickable {
                     pendingMillis = baseMillis
-                    showDatePicker = true
+                    showModeChooser = true
                 }
                 .padding(vertical = 4.dp, horizontal = 8.dp)
         )
@@ -347,6 +381,16 @@ fun EditorDateTimePicker(
         }
     }
 
+    DateTimeModeDialog(
+        isVisible = showModeChooser,
+        currentMode = dateTimeMode,
+        onDismiss = { showModeChooser = false },
+        onSelectMode = { chosenMode ->
+            showModeChooser = false
+            startPickerForMode(chosenMode, pendingMillis)
+        }
+    )
+
     if (showDatePicker) {
         EditorDateDialog(
             initialMillis = pendingMillis,
@@ -354,7 +398,10 @@ fun EditorDateTimePicker(
             onDateConfirmed = { updatedMillis ->
                 pendingMillis = updatedMillis
                 showDatePicker = false
-                showTimePicker = true
+                when (dateTimeMode) {
+                    DateTimePickMode.DATE_AND_TIME -> showTimePicker = true
+                    DateTimePickMode.DATE_ONLY, DateTimePickMode.TIME_ONLY -> onDateTimeSelected(updatedMillis)
+                }
             }
         )
     }
@@ -365,9 +412,75 @@ fun EditorDateTimePicker(
             is24Hour = is24Hour,
             onDismiss = { showTimePicker = false },
             onTimeConfirmed = { finalMillis ->
+                pendingMillis = finalMillis
                 onDateTimeSelected(finalMillis)
                 showTimePicker = false
             }
+        )
+    }
+}
+
+@Composable
+private fun DateTimeModeDialog(
+    isVisible: Boolean,
+    currentMode: DateTimePickMode,
+    onDismiss: () -> Unit,
+    onSelectMode: (DateTimePickMode) -> Unit
+) {
+    GenericModal(
+        isVisible = isVisible,
+        onDismissRequest = onDismiss,
+        title = "What to set?",
+        spaceBetweenHeaderAndContent = 8.dp
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            ModeOptionRow(
+                icon = Icons.Outlined.DateRange,
+                title = "Date & time",
+                selected = currentMode == DateTimePickMode.DATE_AND_TIME,
+                onClick = { onSelectMode(DateTimePickMode.DATE_AND_TIME) }
+            )
+            ModeOptionRow(
+                icon = Icons.Outlined.CalendarToday,
+                title = "Date only",
+                selected = currentMode == DateTimePickMode.DATE_ONLY,
+                onClick = { onSelectMode(DateTimePickMode.DATE_ONLY) }
+            )
+            ModeOptionRow(
+                icon = Icons.Outlined.AccessTime,
+                title = "Time only",
+                selected = currentMode == DateTimePickMode.TIME_ONLY,
+                onClick = { onSelectMode(DateTimePickMode.TIME_ONLY) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ModeOptionRow(
+    icon: ImageVector,
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SmallElementShape)
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp, horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -624,7 +737,7 @@ private fun EditorRecordCardEditModePreview(
                     initialStartTimestamp = System.currentTimeMillis(),
                     initialLabelId = 1,
                     labels = sampleLabels,
-                    onConfirm = { _, _, _ -> },
+                    onConfirm = { _, _, _, _ -> },
                     onCancel = {}
                 )
             }
@@ -648,7 +761,7 @@ private fun EditorRecordCardUncertainPreview(
                     initialStartTimestamp = UNSPECIFIED_TIMESTAMP,
                     initialLabelId = 3,
                     labels = sampleLabels,
-                    onConfirm = { _, _, _ -> },
+                    onConfirm = { _, _, _, _ -> },
                     onCancel = {}
                 )
             }

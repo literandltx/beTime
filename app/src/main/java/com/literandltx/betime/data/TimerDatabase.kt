@@ -3,18 +3,23 @@ package com.literandltx.betime.data
 import android.content.Context
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.room3.AutoMigration
+import androidx.room3.ColumnTypeConverters
 import androidx.room3.Database
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
-import androidx.sqlite.SQLiteConnection
+import androidx.room3.withWriteTransaction
 import com.literandltx.betime.data.dao.ActivePresetDao
+import com.literandltx.betime.data.dao.DatabaseMetadataDao
 import com.literandltx.betime.data.dao.LabelDao
 import com.literandltx.betime.data.dao.TimerOptionDao
 import com.literandltx.betime.data.dao.TimerRecordDao
 import com.literandltx.betime.data.model.ActivePreset
+import com.literandltx.betime.data.model.DatabaseMetadata
 import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.data.model.TimerOption
 import com.literandltx.betime.data.model.TimerRecord
+import com.literandltx.betime.data.util.DateTimePickModeConverter
 
 /**
  * Database class with a singleton Instance object.
@@ -24,18 +29,21 @@ import com.literandltx.betime.data.model.TimerRecord
         Label::class,
         TimerOption::class,
         ActivePreset::class,
-        TimerRecord::class
+        TimerRecord::class,
+        DatabaseMetadata::class
     ],
-    version = 8,
+    version = 1,
     exportSchema = true,
     autoMigrations = []
 )
+@ColumnTypeConverters(DateTimePickModeConverter::class)
 abstract class TimerDatabase : RoomDatabase() {
 
     abstract fun labelDao(): LabelDao
     abstract fun timerOptionDao(): TimerOptionDao
     abstract fun activePresetDao(): ActivePresetDao
     abstract fun timerRecordDao(): TimerRecordDao
+    abstract fun databaseMetadataDao(): DatabaseMetadataDao
 
     companion object {
         @Volatile
@@ -48,50 +56,52 @@ abstract class TimerDatabase : RoomDatabase() {
                     TimerDatabase::class.java,
                     "timer_database"
                 )
-                    .addCallback(TimerDatabaseCallback())
                     .build()
                     .also { Instance = it }
             }
         }
 
-        private class TimerDatabaseCallback : Callback() {
-            override suspend fun onCreate(connection: SQLiteConnection) {
-                super.onCreate(connection)
-                val db = Instance ?: return
-                populateDatabase(
-                    labelDao = db.labelDao(),
-                    timerOptionDao = db.timerOptionDao(),
-                    activePresetDao = db.activePresetDao()
-                )
-            }
+        suspend fun initialize(context: Context) {
+            val db = getDatabase(context)
 
-            private suspend fun populateDatabase(
-                labelDao: LabelDao,
-                timerOptionDao: TimerOptionDao,
-                activePresetDao: ActivePresetDao
-            ) {
-                val defaultLabels = listOf(
-                    Label(name = "Work", colorArgb = Color(0xFF4CAF50).toArgb(), orderIndex = 0),
-                    Label(name = "Rest", colorArgb = Color(0xFFFFB300).toArgb(), orderIndex = 1),
-                    Label(name = "Study", colorArgb = Color(0xFFFF7043).toArgb(), orderIndex = 2),
-                )
-                defaultLabels.forEach { labelDao.insert(it) }
-
-                val defaultTimerOptions = listOf(
-                    TimerOption(value = 20),
-                    TimerOption(value = 45),
-                    TimerOption(value = 60),
-                )
-                defaultTimerOptions.forEach { timerOptionDao.insert(it) }
-
-                activePresetDao.setActivePreset(
-                    ActivePreset(
-                        id = 1,
-                        labelId = 1,
-                        timerOptionId = 1
+            db.withWriteTransaction {
+                if (!db.databaseMetadataDao().isInitialized()) {
+                    populateDatabase(
+                        labelDao = db.labelDao(),
+                        timerOptionDao = db.timerOptionDao(),
+                        activePresetDao = db.activePresetDao()
                     )
-                )
+                    db.databaseMetadataDao().insert(DatabaseMetadata())
+                }
             }
+        }
+
+        private suspend fun populateDatabase(
+            labelDao: LabelDao,
+            timerOptionDao: TimerOptionDao,
+            activePresetDao: ActivePresetDao
+        ) {
+            val defaultLabels = listOf(
+                Label(name = "Work", colorArgb = Color(0xFF4CAF50).toArgb(), orderIndex = 0),
+                Label(name = "Rest", colorArgb = Color(0xFFFFB300).toArgb(), orderIndex = 1),
+                Label(name = "Study", colorArgb = Color(0xFFFF7043).toArgb(), orderIndex = 2)
+            )
+            defaultLabels.forEach { labelDao.insert(it) }
+
+            val defaultTimerOptions = listOf(
+                TimerOption(value = 20),
+                TimerOption(value = 45),
+                TimerOption(value = 60)
+            )
+            defaultTimerOptions.forEach { timerOptionDao.insert(it) }
+
+            activePresetDao.setActivePreset(
+                ActivePreset(
+                    id = 1,
+                    labelId = 1,
+                    timerOptionId = 1
+                )
+            )
         }
     }
 }
