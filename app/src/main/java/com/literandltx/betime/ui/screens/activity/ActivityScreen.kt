@@ -37,7 +37,7 @@ import com.literandltx.betime.data.model.TimerRecordDetails
 import com.literandltx.betime.ui.AppViewModelProvider
 import com.literandltx.betime.ui.screens.activity.widgets.WidgetType
 import com.literandltx.betime.ui.screens.activity.widgets.calendar.CalendarWidget
-import com.literandltx.betime.ui.screens.activity.widgets.donut.DonutContainer
+import com.literandltx.betime.ui.screens.activity.widgets.donut.DonutWidget
 import com.literandltx.betime.ui.screens.activity.widgets.heatmap.HeatmapContainer
 import com.literandltx.betime.ui.screens.activity.widgets.histogram.HistogramWidget
 import sh.calvin.reorderable.ReorderableItem
@@ -163,11 +163,10 @@ fun ActivityScreenContent(
                 )
 
                 when (widgetType) {
-                    WidgetType.DONUT -> DonutContainer(
-                        records = uiState.records,
-                        labels = uiState.labels,
+                    WidgetType.DONUT -> DonutWidget(
                         index = uiState.index,
                         height = halfWidgetHeight,
+                        labels = uiState.labels,
                         isEditing = isEditing,
                         canMoveUp = canMoveUp,
                         canMoveDown = canMoveDown,
@@ -200,9 +199,9 @@ fun ActivityScreenContent(
                     )
 
                     WidgetType.HISTOGRAM -> HistogramWidget(
-                        labels = uiState.labels,
                         index = uiState.index,
                         height = halfWidgetHeight,
+                        labels = uiState.labels,
                         isEditing = isEditing,
                         canMoveUp = canMoveUp,
                         canMoveDown = canMoveDown,

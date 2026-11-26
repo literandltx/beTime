@@ -72,7 +72,6 @@ fun DonutElement(
                 }
         ) {
             val strokeWidthPx = strokeWidth.toPx()
-
             var startAngle = -90f + userRotationAngle
 
             if (totalTime == 0) {
@@ -84,13 +83,13 @@ fun DonutElement(
                     style = Stroke(width = strokeWidthPx)
                 )
             } else {
-                val activeStats = stats.filterValues { it > 0 }
+                val activeStats = stats
+                    .filterValues { it > 0 }
                     .entries
                     .sortedByDescending { it.value }
 
                 val gapAngle = if (activeStats.size > 1) gapSizeDegrees else 0f
                 val totalGapDegrees = activeStats.size * gapAngle
-
                 val availableDegrees = 360f - totalGapDegrees
 
                 activeStats.forEach { entry ->
@@ -98,7 +97,7 @@ fun DonutElement(
                     val time = entry.value
 
                     val sweepAngle = (time.toFloat() / totalTime) * availableDegrees
-                    val segmentColor: Color = label?.composeColor ?: Color.Gray
+                    val segmentColor = label?.composeColor ?: Color.Gray
 
                     drawArc(
                         color = segmentColor,
@@ -110,8 +109,7 @@ fun DonutElement(
                             cap = StrokeCap.Butt
                         )
                     )
-
-                    startAngle += (sweepAngle + gapAngle)
+                    startAngle += sweepAngle + gapAngle
                 }
             }
         }
