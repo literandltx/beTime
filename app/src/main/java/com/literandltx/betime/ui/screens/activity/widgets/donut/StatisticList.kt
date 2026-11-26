@@ -74,8 +74,7 @@ fun StatsListItem(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .padding(vertical = 2.dp)
+        modifier = modifier.padding(vertical = 2.dp)
     ) {
         if (label?.parentId != null) {
             Icon(

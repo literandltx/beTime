@@ -22,8 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -34,22 +32,29 @@ import com.literandltx.betime.R
 import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.data.model.TimerRecord
 import com.literandltx.betime.data.model.TimerRecordDetails
-import com.literandltx.betime.ui.screens.activity.shared.WidgetContainer
+import com.literandltx.betime.ui.screens.activity.ActivityDataIndex
+import com.literandltx.betime.ui.screens.activity.IndexedRecord
+import com.literandltx.betime.ui.screens.activity.buildActivityIndex
 import com.literandltx.betime.ui.screens.activity.shared.CustomDateRangePickerDialog
 import com.literandltx.betime.ui.screens.activity.shared.HeaderPreviewProvider
 import com.literandltx.betime.ui.screens.activity.shared.HeaderPreviewState
 import com.literandltx.betime.ui.screens.activity.shared.TimeSelectorModal
 import com.literandltx.betime.ui.screens.activity.shared.TimeSpan
-import com.literandltx.betime.ui.screens.activity.shared.getFilteredRecords
-import com.literandltx.betime.ui.screens.activity.shared.getLabelStatisticMap
+import com.literandltx.betime.ui.screens.activity.shared.WidgetContainer
 import com.literandltx.betime.ui.theme.TimerTheme
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.ZoneId
+import java.time.temporal.TemporalAdjusters
 
 @Composable
-fun DonutContainer(
-    records: List<TimerRecordDetails>,
+fun DonutWidget(
     labels: List<Label>,
     height: Dp,
     modifier: Modifier = Modifier,
+    index: ActivityDataIndex = ActivityDataIndex(),
     initialShowPercentage: Boolean = false,
     initialTimeSpan: TimeSpan = TimeSpan.DAY,
     initialGroupSubLabels: Boolean = false,
@@ -71,21 +76,44 @@ fun DonutContainer(
     var customStartDate by remember { mutableLongStateOf(0L) }
     var customEndDate by remember { mutableLongStateOf(0L) }
 
-    val timeFilteredRecords = remember(records, selectedTimeSpan, timeOffset, customStartDate, customEndDate) {
-        getFilteredRecords(records, selectedTimeSpan, timeOffset, customStartDate, customEndDate)
-    }
+    val fullyFilteredStats: Map<Label?, Int> = remember(
+        index,
+        labels,
+        selectedTimeSpan,
+        timeOffset,
+        customStartDate,
+        customEndDate,
+        selectedLabels,
+        groupSubLabels
+    ) {
+        val rawMap = computeStatsFromIndex(
+            index = index,
+            timeSpan = selectedTimeSpan,
+            timeOffset = timeOffset,
+            customStartMillis = customStartDate,
+            customEndMillis = customEndDate
+        )
 
-    val statsMap = remember(timeFilteredRecords) {
-        getLabelStatisticMap(timeFilteredRecords)
-    }
-
-    val fullyFilteredStats = remember(statsMap, selectedLabels, labels, groupSubLabels) {
-        val labelFiltered = statsMap.filterKeys { it == null || selectedLabels.contains(it) }
-        if (groupSubLabels) {
-            aggregateSubLabels(labelFiltered, labels)
+        val includeAllLabels = selectedLabels.size == labels.size
+        val map = LinkedHashMap<Label?, Int>()
+        val labelsById = if (groupSubLabels) {
+            labels.associateBy { it.id } + rawMap.keys.filterNotNull().associateBy { it.id }
         } else {
-            labelFiltered
+            emptyMap()
         }
+
+        for ((label, duration) in rawMap) {
+            if (label != null && !includeAllLabels && !selectedLabels.contains(label)) {
+                continue
+            }
+            val targetLabel = if (groupSubLabels && label?.parentId != null) {
+                labelsById[label.parentId] ?: label
+            } else {
+                label
+            }
+            map[targetLabel] = (map[targetLabel] ?: 0) + duration
+        }
+        map
     }
 
     TimeSelectorModal(
@@ -159,6 +187,85 @@ fun DonutContainer(
             )
         }
     }
+}
+
+private fun computeStatsFromIndex(
+    index: ActivityDataIndex,
+    timeSpan: TimeSpan,
+    timeOffset: Int,
+    customStartMillis: Long,
+    customEndMillis: Long
+): Map<Label?, Int> {
+    val result = HashMap<Label?, Int>()
+    val today = LocalDate.now()
+    val zone = ZoneId.systemDefault()
+
+    fun addRecord(rec: IndexedRecord) {
+        val label = rec.label ?: rec.labelId?.let {
+            index.labelsById[it]
+        }
+
+        result[label] = (result[label] ?: 0) + rec.durationSeconds
+    }
+
+    when (timeSpan) {
+        TimeSpan.DAY -> {
+            val targetDay = today.plusDays(timeOffset.toLong()).toEpochDay()
+            index.byDay[targetDay]?.records?.forEach(::addRecord)
+        }
+
+        TimeSpan.WEEK -> {
+            val weekStart = today
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .plusWeeks(timeOffset.toLong())
+            for (i in 0 until 7) {
+                val epochDay = weekStart.plusDays(i.toLong()).toEpochDay()
+                index.byDay[epochDay]?.records?.forEach(::addRecord)
+            }
+        }
+
+        TimeSpan.MONTH -> {
+            val yearMonth = YearMonth.from(today).plusMonths(timeOffset.toLong())
+
+            for (day in 1..yearMonth.lengthOfMonth()) {
+                val epochDay = yearMonth.atDay(day).toEpochDay()
+                index.byDay[epochDay]?.records?.forEach(::addRecord)
+            }
+        }
+
+        TimeSpan.YEAR -> {
+            val targetYear = today.year + timeOffset
+            for ((epochDay, bucket) in index.byDay) {
+                if (LocalDate.ofEpochDay(epochDay).year == targetYear) {
+                    bucket.records.forEach(::addRecord)
+                }
+            }
+        }
+
+        TimeSpan.ALL_TIME -> {
+            index.allRecords.forEach(::addRecord)
+        }
+
+        TimeSpan.CUSTOM -> {
+            if (customStartMillis > 0L) {
+                val startDay = Instant.ofEpochMilli(customStartMillis)
+                    .atZone(zone)
+                    .toLocalDate()
+                    .toEpochDay()
+
+                val endDay = Instant.ofEpochMilli(customEndMillis)
+                    .atZone(zone)
+                    .toLocalDate()
+                    .toEpochDay()
+
+                for (day in startDay..endDay) {
+                    index.byDay[day]?.records?.forEach(::addRecord)
+                }
+            }
+        }
+    }
+
+    return result
 }
 
 @Composable
@@ -246,7 +353,7 @@ private fun DonutContent(
                         stringResource(R.string.noRecordsMonthsAgo, -timeOffset)
                     }
                 }
-                TimeSpan.YEAR -> stringResource(R.string.noRecordsMessage)
+                TimeSpan.YEAR,
                 TimeSpan.ALL_TIME -> stringResource(R.string.noRecordsMessage)
                 TimeSpan.CUSTOM -> stringResource(R.string.noRecordsPeriod)
             }
@@ -260,89 +367,44 @@ private fun DonutContent(
     }
 }
 
-private fun aggregateSubLabels(
-    stats: Map<Label?, Int>,
-    allLabels: List<Label>
-): Map<Label?, Int> {
-    val labelsById = allLabels.associateBy { it.id } +
-            stats.keys.filterNotNull().associateBy { it.id }
-
-    val aggregated = mutableMapOf<Label?, Int>()
-    for ((label, duration) in stats) {
-        val parentId = label?.parentId
-        val targetLabel = if (parentId != null) {
-            labelsById[parentId] ?: label
-        } else {
-            label
-        }
-        aggregated[targetLabel] = (aggregated[targetLabel] ?: 0) + duration
-    }
-
-    return aggregated
-}
-
 @Preview(showBackground = true, name = "Donut Container Theme Preview")
 @Composable
-fun DonutContainerPreview(
+fun DonutWidgetPreview(
     @PreviewParameter(HeaderPreviewProvider::class) state: HeaderPreviewState
 ) {
-    val focusLabel = Label(id = 1, name = "Focus", colorArgb = 0xFFFF5722.toInt(), orderIndex = 0)
-    val deepWorkSubLabel = Label(
-        id = 11,
-        parentId = 1,
-        name = "Deep work",
-        colorArgb = 0xFFE64A19.toInt(),
+    val focusLabel = Label(
+        id = 1,
+        name = "Focus",
+        colorArgb = 0xFFFF5722.toInt(),
         orderIndex = 0
     )
-    val breakLabel = Label(id = 2, name = "Break", colorArgb = 0xFF4CAF50.toInt(), orderIndex = 1)
-    val chillLabel = Label(id = 3, name = "Chill", colorArgb = 0xFFFFC107.toInt(), orderIndex = 2)
-    val workLabel = Label(id = 4, name = "Work", colorArgb = 0xFF2196F3.toInt(), orderIndex = 3)
-    val restLabel = Label(id = 5, name = "Rest", colorArgb = 0xFF9C27B0.toInt(), orderIndex = 4)
-    val walkingLabel = Label(id = 6, name = "Walking", colorArgb = 0xFF00BCD4.toInt(), orderIndex = 5)
 
-    val mockLabels = listOf(
-        focusLabel,
-        deepWorkSubLabel,
-        breakLabel,
-        chillLabel,
-        workLabel,
-        restLabel,
-        walkingLabel
+    val breakLabel = Label(
+        id = 2,
+        name = "Break",
+        colorArgb = 0xFF4CAF50.toInt(),
+        orderIndex = 1
     )
+
+    val mockLabels = listOf(focusLabel, breakLabel)
     val now = System.currentTimeMillis()
 
     val mockRecords = listOf(
         TimerRecordDetails(
-            record = TimerRecord(id = 1, value = 5400, startTimestamp = now),
+            record = TimerRecord(
+                id = 1,
+                value = 5400,
+                startTimestamp = now
+            ),
             label = focusLabel
         ),
         TimerRecordDetails(
-            record = TimerRecord(id = 2, value = 2400, startTimestamp = now),
-            label = deepWorkSubLabel
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 3, value = 3600, startTimestamp = now),
+            record = TimerRecord(
+                id = 2,
+                value = 3600,
+                startTimestamp = now
+            ),
             label = breakLabel
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 4, value = 1800, startTimestamp = now),
-            label = chillLabel
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 5, value = 900, startTimestamp = now),
-            label = null
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 6, value = 900, startTimestamp = now),
-            label = workLabel
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 7, value = 900, startTimestamp = now),
-            label = restLabel
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 8, value = 900, startTimestamp = now),
-            label = walkingLabel
         )
     )
 
@@ -352,69 +414,14 @@ fun DonutContainerPreview(
             color = MaterialTheme.colorScheme.background
         ) {
             Box(modifier = Modifier.padding(16.dp)) {
-                DonutContainer(
+                DonutWidget(
                     labels = mockLabels,
-                    records = mockRecords,
+                    index = buildActivityIndex(
+                        records = mockRecords,
+                        labels = mockLabels,
+                        zoneId = ZoneId.systemDefault()
+                    ),
                     initialTimeSpan = state.timeSpan,
-                    height = 360.dp
-                )
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true, name = "Donut Container Date Format Preview")
-@Composable
-fun DonutContainerDatePreview() {
-    val labelToday = Label(id = 1, name = "Today", colorArgb = 0xFFFF5722.toInt(), orderIndex = 0)
-    val subLabelToday = Label(
-        id = 11,
-        parentId = 1,
-        name = "Sub Today",
-        colorArgb = 0xFFFF8A65.toInt(),
-        orderIndex = 0
-    )
-    val labelDaysAgo = Label(id = 2, name = "2 Days Ago", colorArgb = Color.Green.toArgb(), orderIndex = 1)
-    val labelLastWeek = Label(id = 3, name = "Last Week", colorArgb = Color.Blue.toArgb(), orderIndex = 2)
-    val labelLastMonth = Label(id = 4, name = "Last Month", colorArgb = Color.Magenta.toArgb(), orderIndex = 3)
-
-    val mockLabels = listOf(labelToday, subLabelToday, labelDaysAgo, labelLastWeek, labelLastMonth)
-    val now = System.currentTimeMillis()
-    val dayInMillis = 24L * 60L * 60L * 1000L
-
-    val mockRecords = listOf(
-        TimerRecordDetails(
-            record = TimerRecord(id = 1, value = 3600, startTimestamp = now),
-            label = labelToday
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 2, value = 1800, startTimestamp = now),
-            label = subLabelToday
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 3, value = 5400, startTimestamp = now - (2 * dayInMillis)),
-            label = labelDaysAgo
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 4, value = 7200, startTimestamp = now - (8 * dayInMillis)),
-            label = labelLastWeek
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 5, value = 9600, startTimestamp = now - (35 * dayInMillis)),
-            label = labelLastMonth
-        )
-    )
-
-    TimerTheme {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Box(modifier = Modifier.padding(16.dp)) {
-                DonutContainer(
-                    labels = mockLabels,
-                    records = mockRecords,
-                    initialTimeSpan = TimeSpan.WEEK,
                     height = 360.dp
                 )
             }

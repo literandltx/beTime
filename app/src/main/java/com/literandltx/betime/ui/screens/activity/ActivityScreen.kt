@@ -11,9 +11,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -21,25 +26,23 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.literandltx.betime.ui.screens.activity.widgets.histogram.HistogramWidget
 import com.literandltx.betime.R
 import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.data.model.TimerRecord
 import com.literandltx.betime.data.model.TimerRecordDetails
 import com.literandltx.betime.ui.AppViewModelProvider
 import com.literandltx.betime.ui.screens.activity.widgets.WidgetType
-import com.literandltx.betime.ui.screens.activity.widgets.heatmap.HeatmapContainer
-import com.literandltx.betime.ui.screens.activity.widgets.donut.DonutContainer
 import com.literandltx.betime.ui.screens.activity.widgets.calendar.CalendarWidget
-import com.literandltx.betime.ui.shared.EditIconButton
-import com.literandltx.betime.ui.shared.SectionHeader
+import com.literandltx.betime.ui.screens.activity.widgets.donut.DonutWidget
+import com.literandltx.betime.ui.screens.activity.widgets.heatmap.HeatmapContainer
+import com.literandltx.betime.ui.screens.activity.widgets.histogram.HistogramWidget
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import java.time.ZoneId
 
 private const val TAG = "ActivityScreen"
 
@@ -160,10 +163,10 @@ fun ActivityScreenContent(
                 )
 
                 when (widgetType) {
-                    WidgetType.DONUT -> DonutContainer(
-                        records = uiState.records,
-                        labels = uiState.labels,
+                    WidgetType.DONUT -> DonutWidget(
+                        index = uiState.index,
                         height = halfWidgetHeight,
+                        labels = uiState.labels,
                         isEditing = isEditing,
                         canMoveUp = canMoveUp,
                         canMoveDown = canMoveDown,
@@ -173,7 +176,7 @@ fun ActivityScreenContent(
                     )
 
                     WidgetType.CALENDAR -> CalendarWidget(
-                        records = uiState.records,
+                        index = uiState.index,
                         height = halfWidgetHeight,
                         isEditing = isEditing,
                         canMoveUp = canMoveUp,
@@ -184,7 +187,7 @@ fun ActivityScreenContent(
                     )
 
                     WidgetType.HEATMAP -> HeatmapContainer(
-                        records = uiState.records,
+                        index = uiState.index,
                         height = halfWidgetHeight,
                         unitLabel = "records",
                         isEditing = isEditing,
@@ -196,9 +199,9 @@ fun ActivityScreenContent(
                     )
 
                     WidgetType.HISTOGRAM -> HistogramWidget(
-                        records = uiState.records,
-                        labels = uiState.labels,
+                        index = uiState.index,
                         height = halfWidgetHeight,
+                        labels = uiState.labels,
                         isEditing = isEditing,
                         canMoveUp = canMoveUp,
                         canMoveDown = canMoveDown,
@@ -215,42 +218,55 @@ fun ActivityScreenContent(
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 fun ActivityScreenContentPreview() {
+    val labels = listOf(
+        Label(id = 1, name = "Work", colorArgb = 0xFF4285F4.toInt()),
+        Label(id = 2, name = "Study", colorArgb = 0xFFEA4335.toInt()),
+        Label(id = 3, name = "Exercise", colorArgb = 0xFF34A853.toInt())
+    )
+
+    val now = System.currentTimeMillis()
+
+    val records = listOf(
+        TimerRecordDetails(
+            record = TimerRecord(
+                id = 1,
+                value = 120,
+                startTimestamp = now - 7200000,
+                labelId = 1
+            ),
+            label = labels[0]
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(
+                id = 2,
+                value = 3600,
+                startTimestamp = now - 3600000,
+                labelId = 2
+            ),
+            label = labels[1]
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(
+                id = 3,
+                value = 90,
+                startTimestamp = now,
+                labelId = 3
+            ),
+            label = labels[2]
+        )
+    )
+
+    val index = buildActivityIndex(
+        records = records,
+        labels = labels,
+        zoneId = ZoneId.systemDefault()
+    )
+
     ActivityScreenContent(
         uiState = ActivityUiState(
-            records = listOf(
-                TimerRecordDetails(
-                    record = TimerRecord(
-                        id = 1,
-                        value = 120,
-                        startTimestamp = System.currentTimeMillis() - 7200000,
-                        labelId = 1
-                    ),
-                    label = Label(id = 1, name = "Work", colorArgb = 0xFF4285F4.toInt())
-                ),
-                TimerRecordDetails(
-                    record = TimerRecord(
-                        id = 2,
-                        value = 60,
-                        startTimestamp = System.currentTimeMillis() - 3600000,
-                        labelId = 2
-                    ),
-                    label = Label(id = 2, name = "Study", colorArgb = 0xFFEA4335.toInt())
-                ),
-                TimerRecordDetails(
-                    record = TimerRecord(
-                        id = 3,
-                        value = 90,
-                        startTimestamp = System.currentTimeMillis(),
-                        labelId = 3
-                    ),
-                    label = Label(id = 3, name = "Exercise", colorArgb = 0xFF34A853.toInt())
-                )
-            ),
-            labels = listOf(
-                Label(id = 1, name = "Work", colorArgb = 0xFF4285F4.toInt()),
-                Label(id = 2, name = "Study", colorArgb = 0xFFEA4335.toInt()),
-                Label(id = 3, name = "Exercise", colorArgb = 0xFF34A853.toInt())
-            )
+            records = records,
+            labels = labels,
+            index = index
         )
     )
 }
