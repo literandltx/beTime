@@ -1,18 +1,16 @@
 package com.literandltx.betime.ui.screens.activity.widgets.calendar
 
 import android.content.Context
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +26,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -45,10 +46,14 @@ import com.literandltx.betime.data.model.TimerRecord
 import com.literandltx.betime.data.model.TimerRecordDetails
 import com.literandltx.betime.data.preferences.AppThemeMode
 import com.literandltx.betime.data.preferences.AppThemeModeProvider
+import com.literandltx.betime.ui.screens.activity.ActivityDataIndex
 import com.literandltx.betime.ui.screens.activity.shared.WidgetContainer
 import com.literandltx.betime.ui.theme.TimerTheme
 import com.literandltx.betime.util.DEFAULT_PADDING_CHAR
-import java.text.SimpleDateFormat
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAdjusters
 import java.util.Calendar
 import java.util.Locale
 
@@ -110,6 +115,7 @@ fun CalendarWidget(
     records: List<TimerRecordDetails>,
     height: Dp,
     modifier: Modifier = Modifier,
+    index: ActivityDataIndex = ActivityDataIndex(),
     config: CalendarWidgetConfig = CalendarWidgetConfig(),
     isEditing: Boolean = false,
     canMoveUp: Boolean = true,
@@ -121,16 +127,14 @@ fun CalendarWidget(
     val context = LocalContext.current
     var timeOffset by remember { mutableIntStateOf(0) }
 
-    val referenceDate = remember(timeOffset, config.firstDayOfWeek) {
-        startOfWeek(Calendar.getInstance(), config.firstDayOfWeek).apply {
-            add(Calendar.WEEK_OF_YEAR, timeOffset)
-        }
+    val weekStartDate = remember(timeOffset, config.firstDayOfWeek) {
+        startOfWeekDate(LocalDate.now(), config.firstDayOfWeek).plusWeeks(timeOffset.toLong())
     }
 
-    val daysData = remember(referenceDate, records, config) {
-        buildWeekColumns(
-            weekStart = referenceDate,
-            records = records,
+    val daysData = remember(weekStartDate, index, config, context) {
+        buildWeekColumnsFromIndex(
+            weekStart = weekStartDate,
+            index = index,
             config = config,
             context = context
         )
@@ -258,6 +262,9 @@ private fun DayTrackColumn(
     config: CalendarWidgetConfig,
     modifier: Modifier = Modifier
 ) {
+    val trackBgColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+    val baseLineColor = config.gridLineColor ?: MaterialTheme.colorScheme.outlineVariant
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -275,86 +282,84 @@ private fun DayTrackColumn(
             textAlign = TextAlign.Center
         )
 
-        Box(
+        Canvas(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .clip(RoundedCornerShape(config.trackCornerRadius))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
         ) {
-            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                val totalHeight = maxHeight
-                val baseLineColor = config.gridLineColor ?: MaterialTheme.colorScheme.outlineVariant
+            val totalHeight = size.height
+            val totalWidth = size.width
 
-                val visibleGridHours = when (config.gridLineMode) {
-                    GridLineMode.ALL -> config.allGridHours
-                    GridLineMode.MAJOR_ONLY -> config.majorHourMarks
-                    GridLineMode.NONE -> emptyList()
-                }
+            drawRect(color = trackBgColor, size = size)
 
-                visibleGridHours.forEach { hour ->
-                    val fraction = (hour - config.startHour) / config.totalHours
-                    val isMajor = hour in config.majorHourMarks
+            val visibleGridHours = when (config.gridLineMode) {
+                GridLineMode.ALL -> config.allGridHours
+                GridLineMode.MAJOR_ONLY -> config.majorHourMarks
+                GridLineMode.NONE -> emptyList()
+            }
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = config.gridLineHorizontalPadding)
-                            .height(if (isMajor) config.majorLineThickness else config.minorLineThickness)
-                            .offset(y = totalHeight * fraction)
-                            .background(
-                                baseLineColor.copy(
-                                    alpha = if (isMajor) config.majorLineAlpha else config.minorLineAlpha
-                                )
-                            )
+            val linePadPx = config.gridLineHorizontalPadding.toPx()
+            val majorThickPx = config.majorLineThickness.toPx()
+            val minorThickPx = config.minorLineThickness.toPx()
+
+            for (hour in visibleGridHours) {
+                val fraction = (hour - config.startHour) / config.totalHours
+                val isMajor = hour in config.majorHourMarks
+                val y = totalHeight * fraction
+                val thickness = if (isMajor) majorThickPx else minorThickPx
+                val alpha = if (isMajor) config.majorLineAlpha else config.minorLineAlpha
+
+                drawRect(
+                    color = baseLineColor.copy(alpha = alpha),
+                    topLeft = Offset(linePadPx, y),
+                    size = Size(
+                        width = (totalWidth - linePadPx * 2f).coerceAtLeast(0f),
+                        height = thickness
                     )
-                }
+                )
+            }
 
-                dayColumn.blocks.forEach { block ->
-                    val blockOffsetY = totalHeight * block.topFraction
-                    val blockHeight = (totalHeight * block.heightFraction)
-                        .coerceAtLeast(config.minBlockHeight)
+            val blockPadPx = 2.dp.toPx()
+            val minBlockHeightPx = config.minBlockHeight.toPx()
+            val cornerRadiusPx = config.blockCornerRadius.toPx()
+            val blockWidth = (totalWidth - blockPadPx * 2f).coerceAtLeast(0f)
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 2.dp)
-                            .height(blockHeight)
-                            .offset(y = blockOffsetY)
-                            .background(block.color, RoundedCornerShape(config.blockCornerRadius))
-                    )
-                }
+            for (block in dayColumn.blocks) {
+                val blockTopPx = totalHeight * block.topFraction
+                val blockHeightPx = (totalHeight * block.heightFraction).coerceAtLeast(minBlockHeightPx)
+
+                drawRoundRect(
+                    color = block.color,
+                    topLeft = Offset(blockPadPx, blockTopPx),
+                    size = Size(width = blockWidth, height = blockHeightPx),
+                    cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx)
+                )
             }
         }
     }
 }
 
-private fun buildWeekColumns(
-    weekStart: Calendar,
-    records: List<TimerRecordDetails>,
+private fun buildWeekColumnsFromIndex(
+    weekStart: LocalDate,
+    index: ActivityDataIndex,
     config: CalendarWidgetConfig,
     context: Context
 ): List<DayColumnData> {
-    val todayCal = Calendar.getInstance()
-    val dayFormatter = SimpleDateFormat(config.dayHeaderFormat, config.locale)
+    val today = LocalDate.now()
+    val formatter = DateTimeFormatter.ofPattern(config.dayHeaderFormat, config.locale)
+    val noLabelText = context.getString(R.string.noLabelMessage)
 
     return (0 until 7).map { dayOffset ->
-        val dayCal = (weekStart.clone() as Calendar).apply {
-            add(Calendar.DAY_OF_YEAR, dayOffset)
-        }
+        val dayDate = weekStart.plusDays(dayOffset.toLong())
+        val bucket = index.byDay[dayDate.toEpochDay()]
+        val dayRecords = bucket?.records.orEmpty()
 
-        val blocks = records.mapNotNull { recordDetails ->
-            val recordCal = Calendar.getInstance().apply {
-                timeInMillis = recordDetails.record.startTimestamp
-            }
-            if (!isSameDay(recordCal, dayCal)) return@mapNotNull null
+        val blocks = dayRecords.mapNotNull { rec ->
+            val durationHours = rec.durationSeconds / 3600f
+            val endHourFloat = rec.startHourFloat + durationHours
 
-            val startHourFloat = recordCal.get(Calendar.HOUR_OF_DAY) +
-                    (recordCal.get(Calendar.MINUTE) / 60f)
-            val durationHours = recordDetails.record.value / 3600f
-            val endHourFloat = startHourFloat + durationHours
-
-            val visibleStart = startHourFloat.coerceIn(
+            val visibleStart = rec.startHourFloat.coerceIn(
                 config.startHour.toFloat(),
                 config.endHour.toFloat()
             )
@@ -367,39 +372,35 @@ private fun buildWeekColumns(
             if (visibleDuration <= 0f) return@mapNotNull null
 
             TimelineBlock(
-                id = recordDetails.record.id.toString(),
+                id = rec.id.toString(),
                 topFraction = (visibleStart - config.startHour) / config.totalHours,
                 heightFraction = visibleDuration / config.totalHours,
-                color = recordDetails.label?.composeColor ?: config.fallbackBlockColor,
-                labelName = recordDetails.label?.name ?: context.getString(R.string.noLabelMessage)
+                color = rec.label?.composeColor ?: config.fallbackBlockColor,
+                labelName = rec.label?.name ?: noLabelText
             )
         }
 
         DayColumnData(
-            key = dayCal.timeInMillis.toString(),
-            label = dayFormatter.format(dayCal.time),
-            isToday = isSameDay(dayCal, todayCal),
+            key = dayDate.toEpochDay().toString(),
+            label = dayDate.format(formatter),
+            isToday = dayDate == today,
             blocks = blocks
         )
     }
 }
 
-private fun startOfWeek(date: Calendar, firstDayOfWeek: Int): Calendar {
-    return (date.clone() as Calendar).apply {
-        this.firstDayOfWeek = firstDayOfWeek
-        val currentDay = get(Calendar.DAY_OF_WEEK)
-        val diff = ((firstDayOfWeek - currentDay - 7) % 7)
-        add(Calendar.DAY_OF_YEAR, diff)
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
+private fun startOfWeekDate(date: LocalDate, firstDayOfWeek: Int): LocalDate {
+    val targetDow = when (firstDayOfWeek) {
+        Calendar.SUNDAY -> DayOfWeek.SUNDAY
+        Calendar.MONDAY -> DayOfWeek.MONDAY
+        Calendar.TUESDAY -> DayOfWeek.TUESDAY
+        Calendar.WEDNESDAY -> DayOfWeek.WEDNESDAY
+        Calendar.THURSDAY -> DayOfWeek.THURSDAY
+        Calendar.FRIDAY -> DayOfWeek.FRIDAY
+        Calendar.SATURDAY -> DayOfWeek.SATURDAY
+        else -> DayOfWeek.MONDAY
     }
-}
-
-private fun isSameDay(a: Calendar, b: Calendar): Boolean {
-    return a.get(Calendar.YEAR) == b.get(Calendar.YEAR) &&
-            a.get(Calendar.DAY_OF_YEAR) == b.get(Calendar.DAY_OF_YEAR)
+    return date.with(TemporalAdjusters.previousOrSame(targetDow))
 }
 
 @Preview(showBackground = true)
@@ -409,50 +410,16 @@ fun CalendarWidgetPreview(
 ) {
     val workLabel = Label(id = 1, name = "Work", colorArgb = 0xFF4285F4.toInt(), orderIndex = 0)
     val studyLabel = Label(id = 2, name = "Study", colorArgb = 0xFF34A853.toInt(), orderIndex = 1)
-    val exerciseLabel = Label(id = 3, name = "Exercise", colorArgb = 0xFFEA4335.toInt(), orderIndex = 2)
-
     val config = CalendarWidgetConfig()
-    val weekStart = startOfWeek(Calendar.getInstance(), config.firstDayOfWeek)
-
-    fun timestampAt(dayOffset: Int, hour: Int, minute: Int = 0): Long {
-        return (weekStart.clone() as Calendar).apply {
-            add(Calendar.DAY_OF_YEAR, dayOffset)
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
-        }.timeInMillis
-    }
+    val nowMillis = System.currentTimeMillis()
 
     val sampleRecords = listOf(
         TimerRecordDetails(
-            record = TimerRecord(id = 1, value = 7200, startTimestamp = timestampAt(0, 9, 0), labelId = 1),
+            record = TimerRecord(id = 1, value = 7200, startTimestamp = nowMillis, labelId = 1),
             label = workLabel
         ),
         TimerRecordDetails(
-            record = TimerRecord(id = 2, value = 5400, startTimestamp = timestampAt(0, 14, 30), labelId = 2),
-            label = studyLabel
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 3, value = 9000, startTimestamp = timestampAt(2, 10, 0), labelId = 1),
-            label = workLabel
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 4, value = 3600, startTimestamp = timestampAt(2, 18, 0), labelId = 3),
-            label = exerciseLabel
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 5, value = 10800, startTimestamp = timestampAt(4, 11, 0), labelId = 1),
-            label = workLabel
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 6, value = 4500, startTimestamp = timestampAt(5, 15, 0), labelId = 2),
-            label = studyLabel
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 7, value = 600, startTimestamp = timestampAt(6, 15, 0), labelId = 2),
-            label = studyLabel
-        ),
-        TimerRecordDetails(
-            record = TimerRecord(id = 8, value = 300, startTimestamp = timestampAt(6, 18, 0), labelId = 2),
+            record = TimerRecord(id = 2, value = 5400, startTimestamp = nowMillis - 3_600_000L, labelId = 2),
             label = studyLabel
         )
     )

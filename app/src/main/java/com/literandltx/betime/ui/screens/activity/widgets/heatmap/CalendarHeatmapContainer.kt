@@ -25,8 +25,11 @@ import com.literandltx.betime.data.model.TimerRecord
 import com.literandltx.betime.data.model.TimerRecordDetails
 import com.literandltx.betime.data.preferences.AppThemeMode
 import com.literandltx.betime.data.preferences.AppThemeModeProvider
+import com.literandltx.betime.ui.screens.activity.ActivityDataIndex
 import com.literandltx.betime.ui.screens.activity.shared.WidgetContainer
 import com.literandltx.betime.ui.theme.TimerTheme
+import java.time.LocalDate
+import java.time.YearMonth
 import java.util.Calendar
 
 @Composable
@@ -34,6 +37,7 @@ fun HeatmapContainer(
     records: List<TimerRecordDetails>,
     height: Dp,
     modifier: Modifier = Modifier,
+    index: ActivityDataIndex = ActivityDataIndex(),
     unitLabel: String = stringResource(R.string.recordsMessage),
     levelThresholds: List<Int> = listOf(1, 2, 3, 4),
     isEditing: Boolean = false,
@@ -45,36 +49,18 @@ fun HeatmapContainer(
 ) {
     var timeOffset by remember { mutableIntStateOf(0) }
 
-    val referenceDate = remember(timeOffset) {
-        Calendar.getInstance().apply {
-            add(Calendar.MONTH, timeOffset)
-        }
+    val yearMonth = remember(timeOffset) {
+        YearMonth.from(LocalDate.now()).plusMonths(timeOffset.toLong())
     }
+    val year = yearMonth.year
+    val month = yearMonth.monthValue - 1
+    val daysInMonth = remember(yearMonth) { yearMonth.lengthOfMonth() }
 
-    val year = referenceDate.get(Calendar.YEAR)
-    val month = referenceDate.get(Calendar.MONTH)
-
-    val daysInMonth = remember(year, month) {
-        val cal = Calendar.getInstance().apply {
-            set(year, month + 1, 0)
+    val dailyCounts = remember(index, yearMonth, daysInMonth) {
+        List(daysInMonth) { dayIdx ->
+            val epochDay = yearMonth.atDay(dayIdx + 1).toEpochDay()
+            index.byDay[epochDay]?.recordCount ?: 0
         }
-        cal.get(Calendar.DAY_OF_MONTH)
-    }
-
-    val dailyCounts = remember(records, year, month, daysInMonth) {
-        val counts = IntArray(daysInMonth)
-        records.forEach { recordDetails ->
-            val cal = Calendar.getInstance().apply {
-                timeInMillis = recordDetails.record.startTimestamp
-            }
-            if (cal.get(Calendar.YEAR) == year && cal.get(Calendar.MONTH) == month) {
-                val dayIndex = cal.get(Calendar.DAY_OF_MONTH) - 1
-                if (dayIndex in counts.indices) {
-                    counts[dayIndex] += 1
-                }
-            }
-        }
-        counts.toList()
     }
 
     val totalCount = remember(dailyCounts) { dailyCounts.sum() }

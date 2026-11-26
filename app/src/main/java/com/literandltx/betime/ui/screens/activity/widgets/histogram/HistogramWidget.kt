@@ -1,7 +1,7 @@
 package com.literandltx.betime.ui.screens.activity.widgets.histogram
 
-import android.content.Context
 import android.graphics.Paint
+import android.graphics.Path as GPath
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
@@ -44,16 +45,17 @@ import com.literandltx.betime.data.model.TimerRecord
 import com.literandltx.betime.data.model.TimerRecordDetails
 import com.literandltx.betime.data.preferences.AppThemeMode
 import com.literandltx.betime.data.preferences.AppThemeModeProvider
-import com.literandltx.betime.ui.screens.activity.shared.WidgetContainer
+import com.literandltx.betime.ui.screens.activity.ActivityDataIndex
 import com.literandltx.betime.ui.screens.activity.shared.LabelSelectorModal
 import com.literandltx.betime.ui.screens.activity.shared.ThreeOptionTimeSelectorModal
 import com.literandltx.betime.ui.screens.activity.shared.TimeSpan
+import com.literandltx.betime.ui.screens.activity.shared.WidgetContainer
 import com.literandltx.betime.ui.theme.TimerTheme
-import java.util.Calendar
+import java.time.LocalDate
+import java.time.YearMonth
 import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.pow
-import android.graphics.Path as GPath
 
 enum class Granularity {
     MONTH,
@@ -68,6 +70,7 @@ fun HistogramWidget(
     labels: List<Label>,
     height: Dp,
     modifier: Modifier = Modifier,
+    index: ActivityDataIndex = ActivityDataIndex(),
     isEditing: Boolean = false,
     canMoveUp: Boolean = true,
     canMoveDown: Boolean = true,
@@ -94,22 +97,56 @@ fun HistogramWidget(
         }
     }
 
-    val hiddenLabelIds = remember(labels, selectedLabels) {
-        labels.filter { !selectedLabels.contains(it) }.map { it.id }.toSet()
+    val hiddenLabelIds: Set<Int> = remember(labels, selectedLabels) {
+        if (selectedLabels.size == labels.size) {
+            emptySet()
+        } else {
+            labels.asSequence()
+                .filter { !selectedLabels.contains(it) }
+                .map { it.id }
+                .toSet()
+        }
     }
 
-    val referenceDate = remember { Calendar.getInstance() }
-    val effectiveReferenceDate = remember(referenceDate, granularity, timeOffset) {
-        shiftReference(referenceDate, granularity, timeOffset)
+    val monthNames: List<String> = listOf(
+        stringResource(R.string.monthJan),
+        stringResource(R.string.monthFeb),
+        stringResource(R.string.monthMar),
+        stringResource(R.string.monthApr),
+        stringResource(R.string.monthMay),
+        stringResource(R.string.monthJun),
+        stringResource(R.string.monthJul),
+        stringResource(R.string.monthAug),
+        stringResource(R.string.monthSep),
+        stringResource(R.string.monthOct),
+        stringResource(R.string.monthNov),
+        stringResource(R.string.monthDec)
+    )
+
+    val currentBuckets = remember(index, granularity, timeOffset, hiddenLabelIds, monthNames) {
+        buildBucketsFromIndex(
+            index = index,
+            granularity = granularity,
+            periodOffset = timeOffset,
+            hiddenLabels = hiddenLabelIds,
+            monthNames = monthNames
+        )
     }
 
-    val currentBuckets = remember(effectiveReferenceDate, granularity, hiddenLabelIds, records, context) {
-        buildBuckets(effectiveReferenceDate, granularity, records, hiddenLabelIds, 0, context)
-    }
-    val previousBuckets = remember(effectiveReferenceDate, granularity, hiddenLabelIds, records, showComparison, context) {
-        if (!showComparison) emptyList()
-        else buildBuckets(effectiveReferenceDate, granularity, records, hiddenLabelIds, -1, context)
-    }
+    val previousBuckets =
+        remember(index, granularity, timeOffset, hiddenLabelIds, showComparison, monthNames) {
+            if (!showComparison) {
+                emptyList()
+            } else {
+                buildBucketsFromIndex(
+                    index = index,
+                    granularity = granularity,
+                    periodOffset = timeOffset - 1,
+                    hiddenLabels = hiddenLabelIds,
+                    monthNames = monthNames
+                )
+            }
+        }
 
     val avgMinutes = remember(currentBuckets) {
         calculateAverageMinutes(currentBuckets)
@@ -223,7 +260,24 @@ private fun LineChartCanvasContainer(
         val primaryColor = MaterialTheme.colorScheme.primary
         val comparisonColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f)
 
+        val yAxisPaint = remember {
+            Paint().apply {
+                textSize = 20f
+                isAntiAlias = true
+                textAlign = Paint.Align.RIGHT
+            }
+        }
+        val xAxisPaint = remember {
+            Paint().apply {
+                textSize = 18f
+                isAntiAlias = true
+            }
+        }
+
         Canvas(modifier = Modifier.fillMaxSize()) {
+            yAxisPaint.color = textColorInt
+            xAxisPaint.color = textColorInt
+
             val width = size.width
             val height = size.height
             val paddingLeft = 32f
@@ -249,7 +303,7 @@ private fun LineChartCanvasContainer(
                 paddingTop = paddingTop,
                 endX = lastBucketX,
                 gridColor = gridColor,
-                textColorInt = textColorInt
+                yAxisPaint = yAxisPaint
             )
 
             if (showComparison && previousBuckets.isNotEmpty() && currentBuckets.isNotEmpty()) {
@@ -276,7 +330,7 @@ private fun LineChartCanvasContainer(
                     denom = denom,
                     height = height,
                     primaryColor = primaryColor,
-                    textColorInt = textColorInt
+                    xAxisPaint = xAxisPaint
                 )
             }
         }
@@ -290,7 +344,7 @@ private fun DrawScope.drawGridLinesAndLabels(
     paddingTop: Float,
     endX: Float,
     gridColor: Color,
-    textColorInt: Int
+    yAxisPaint: Paint
 ) {
     val stepVal = maxVal / 4f
     for (i in 1..4) {
@@ -306,17 +360,11 @@ private fun DrawScope.drawGridLinesAndLabels(
         )
 
         drawIntoCanvas { canvas ->
-            val paint = Paint().apply {
-                color = textColorInt
-                textSize = 20f
-                isAntiAlias = true
-                textAlign = Paint.Align.RIGHT
-            }
             canvas.nativeCanvas.drawText(
                 Math.round(v).toString(),
                 paddingLeft - 10f,
                 y + 7f,
-                paint
+                yAxisPaint
             )
         }
     }
@@ -364,7 +412,7 @@ private fun DrawScope.drawCurrentChartData(
     denom: Int,
     height: Float,
     primaryColor: Color,
-    textColorInt: Int
+    xAxisPaint: Paint
 ) {
     val points = currentBuckets.mapIndexed { index, b ->
         val x = paddingLeft + (usableWidth * index) / denom
@@ -382,7 +430,11 @@ private fun DrawScope.drawCurrentChartData(
     drawPath(
         path = fillPath.asComposePath(),
         brush = Brush.verticalGradient(
-            colors = listOf(primaryColor.copy(alpha = 0.3f), primaryColor.copy(alpha = 0.02f), Color.Transparent),
+            colors = listOf(
+                primaryColor.copy(alpha = 0.3f),
+                primaryColor.copy(alpha = 0.02f),
+                Color.Transparent
+            ),
             startY = paddingTop,
             endY = baselineY
         )
@@ -396,7 +448,14 @@ private fun DrawScope.drawCurrentChartData(
                 val prev = points[idx - 1]
                 val controlPoint1 = Offset(prev.x + (pt.x - prev.x) / 2f, prev.y)
                 val controlPoint2 = Offset(prev.x + (pt.x - prev.x) / 2f, pt.y)
-                cubicTo(controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, pt.x, pt.y)
+                cubicTo(
+                    controlPoint1.x,
+                    controlPoint1.y,
+                    controlPoint2.x,
+                    controlPoint2.y,
+                    pt.x,
+                    pt.y
+                )
             }
         }
     }
@@ -421,28 +480,17 @@ private fun DrawScope.drawCurrentChartData(
 
         if (isFirst || isLast || idx % stepX == 0) {
             drawIntoCanvas { canvas ->
-                val paint = Paint().apply {
-                    color = textColorInt
-                    textSize = 18f
-                    isAntiAlias = true
-                    textAlign = when {
-                        isFirst -> Paint.Align.LEFT
-                        isLast -> Paint.Align.RIGHT
-                        else -> Paint.Align.CENTER
-                    }
-                }
-
-                val drawX = when {
-                    isFirst -> pt.x
-                    isLast -> pt.x
-                    else -> pt.x
+                xAxisPaint.textAlign = when {
+                    isFirst -> Paint.Align.LEFT
+                    isLast -> Paint.Align.RIGHT
+                    else -> Paint.Align.CENTER
                 }
 
                 canvas.nativeCanvas.drawText(
                     currentBuckets[idx].label,
-                    drawX,
+                    pt.x,
                     height - 2f,
-                    paint
+                    xAxisPaint
                 )
             }
         }
@@ -468,83 +516,74 @@ private fun calculateMaxVal(
     return niceMax(dataMax.toFloat())
 }
 
-private fun buildBuckets(
-    ref: Calendar,
+private fun buildBucketsFromIndex(
+    index: ActivityDataIndex,
     granularity: Granularity,
-    records: List<TimerRecordDetails>,
-    hiddenLabels: Set<Int>,
     periodOffset: Int,
-    context: Context
+    hiddenLabels: Set<Int>,
+    monthNames: List<String>
 ): List<ChartBucket> {
-    val cal = ref.clone() as Calendar
+    val today = LocalDate.now()
 
-    when (granularity) {
+    return when (granularity) {
         Granularity.MONTH -> {
-            cal.add(Calendar.MONTH, periodOffset)
-            val year = cal.get(Calendar.YEAR)
-            val month = cal.get(Calendar.MONTH)
-            val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+            val ym = YearMonth.from(today).plusMonths(periodOffset.toLong())
+            val daysInMonth = ym.lengthOfMonth()
             val totalsInSeconds = IntArray(daysInMonth)
 
-            records.forEach { recordDetails ->
-                val labelId = recordDetails.record.labelId
-                if (labelId == null || !hiddenLabels.contains(labelId)) {
-                    val d = Calendar.getInstance().apply { timeInMillis = recordDetails.record.startTimestamp }
-                    if (d.get(Calendar.YEAR) == year && d.get(Calendar.MONTH) == month) {
-                        val dayOfMonth = d.get(Calendar.DAY_OF_MONTH) - 1
-                        if (dayOfMonth in totalsInSeconds.indices) {
-                            totalsInSeconds[dayOfMonth] += recordDetails.record.value
+            for (day in 1..daysInMonth) {
+                val epochDay = ym.atDay(day).toEpochDay()
+                val bucket = index.byDay[epochDay] ?: continue
+                if (hiddenLabels.isEmpty()) {
+                    totalsInSeconds[day - 1] = bucket.totalSeconds
+                } else {
+                    var sum = 0
+                    for (rec in bucket.records) {
+                        val lid = rec.labelId
+                        if (lid == null || !hiddenLabels.contains(lid)) {
+                            sum += rec.durationSeconds
+                        }
+                    }
+                    totalsInSeconds[day - 1] = sum
+                }
+            }
+
+            List(daysInMonth) { i ->
+                ChartBucket(label = (i + 1).toString(), minutes = totalsInSeconds[i] / 60)
+            }
+        }
+
+        Granularity.YEAR -> {
+            val year = today.year + periodOffset
+            val totalsInSeconds = IntArray(12)
+
+            for (month in 1..12) {
+                val ym = YearMonth.of(year, month)
+                val daysInMonth = ym.lengthOfMonth()
+                var monthSec = 0
+
+                for (day in 1..daysInMonth) {
+                    val epochDay = ym.atDay(day).toEpochDay()
+                    val bucket = index.byDay[epochDay] ?: continue
+                    if (hiddenLabels.isEmpty()) {
+                        monthSec += bucket.totalSeconds
+                    } else {
+                        for (rec in bucket.records) {
+                            val lid = rec.labelId
+                            if (lid == null || !hiddenLabels.contains(lid)) {
+                                monthSec += rec.durationSeconds
+                            }
                         }
                     }
                 }
+                totalsInSeconds[month - 1] = monthSec
             }
-            return totalsInSeconds.mapIndexed { i, secs ->
-                ChartBucket(label = (i + 1).toString(), minutes = (secs / 60.0).toInt())
-            }
-        }
-        Granularity.YEAR -> {
-            cal.add(Calendar.YEAR, periodOffset)
-            val year = cal.get(Calendar.YEAR)
-            val totalsInSeconds = IntArray(12)
-            val monthNames = listOf(
-                context.getString(R.string.monthJan),
-                context.getString(R.string.monthFeb),
-                context.getString(R.string.monthMar),
-                context.getString(R.string.monthApr),
-                context.getString(R.string.monthMay),
-                context.getString(R.string.monthJun),
-                context.getString(R.string.monthJul),
-                context.getString(R.string.monthAug),
-                context.getString(R.string.monthSep),
-                context.getString(R.string.monthOct),
-                context.getString(R.string.monthNov),
-                context.getString(R.string.monthDec)
-            )
 
-            records.forEach { recordDetails ->
-                val labelId = recordDetails.record.labelId
-                if (labelId == null || !hiddenLabels.contains(labelId)) {
-                    val d = Calendar.getInstance().apply { timeInMillis = recordDetails.record.startTimestamp }
-                    if (d.get(Calendar.YEAR) == year) {
-                        val m = d.get(Calendar.MONTH)
-                        totalsInSeconds[m] += recordDetails.record.value
-                    }
-                }
-            }
-            return totalsInSeconds.mapIndexed { i, secs ->
-                ChartBucket(label = monthNames[i], minutes = (secs / 60.0).toInt())
+            List(12) { i ->
+                ChartBucket(label = monthNames[i], minutes = totalsInSeconds[i] / 60)
             }
         }
     }
-}
-
-private fun shiftReference(ref: Calendar, granularity: Granularity, dir: Int): Calendar {
-    val d = ref.clone() as Calendar
-    when (granularity) {
-        Granularity.MONTH -> d.add(Calendar.MONTH, dir)
-        Granularity.YEAR -> d.add(Calendar.YEAR, dir)
-    }
-    return d
 }
 
 private fun niceMax(value: Float): Float {
@@ -572,41 +611,22 @@ fun HistogramWidgetPreview(
         Label(id = 3, name = "Exercise", colorArgb = 0xFF2196F3.toInt(), orderIndex = 2)
     )
 
-    val calendar = Calendar.getInstance()
-    val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
-
-    val dailyMinutes = listOf(
-        85, 120, 45, 180, 150, 210, 90,
-        240, 165, 110, 195, 270, 130, 180,
-        220, 95, 160, 250, 200, 140, 300,
-        175, 230, 115, 190, 260, 145, 210,
-        180, 280, 125
+    val nowMillis = System.currentTimeMillis()
+    val sampleRecords = listOf(
+        TimerRecordDetails(
+            record = TimerRecord(id = 1, labelId = 1, startTimestamp = nowMillis, value = 5400),
+            label = sampleLabels[0]
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(
+                id = 2,
+                labelId = 2,
+                startTimestamp = nowMillis - 86_400_000L,
+                value = 3600
+            ),
+            label = sampleLabels[1]
+        )
     )
-
-    val sampleRecords = buildList {
-        dailyMinutes.take(currentDay).forEachIndexed { index, minutes ->
-            val dayCalendar = calendar.clone() as Calendar
-            dayCalendar.set(Calendar.DAY_OF_MONTH, index + 1)
-            dayCalendar.set(Calendar.HOUR_OF_DAY, 12)
-            dayCalendar.set(Calendar.MINUTE, 0)
-            dayCalendar.set(Calendar.SECOND, 0)
-            dayCalendar.set(Calendar.MILLISECOND, 0)
-
-            val label = sampleLabels[index % sampleLabels.size]
-
-            add(
-                TimerRecordDetails(
-                    record = TimerRecord(
-                        id = index + 1,
-                        labelId = label.id,
-                        startTimestamp = dayCalendar.timeInMillis,
-                        value = minutes * 60
-                    ),
-                    label = label
-                )
-            )
-        }
-    }
 
     TimerTheme(themeMode = themeMode) {
         Surface(
