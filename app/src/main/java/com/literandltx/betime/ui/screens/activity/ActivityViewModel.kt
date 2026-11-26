@@ -88,62 +88,116 @@ class ActivityViewModel(
         }
     }
 
-    private fun buildActivityIndex(
-        records: List<TimerRecordDetails>,
-        labels: List<Label>,
-        zoneId: ZoneId
-    ): ActivityDataIndex {
-        if (records.isEmpty()) {
-            return ActivityDataIndex(
-                byDay = emptyMap(),
-                labelsById = labels.associateBy { it.id },
-                allRecords = emptyList()
-            )
-        }
+//    private fun buildActivityIndex(
+//        records: List<TimerRecordDetails>,
+//        labels: List<Label>,
+//        zoneId: ZoneId
+//    ): ActivityDataIndex {
+//        if (records.isEmpty()) {
+//            return ActivityDataIndex(
+//                byDay = emptyMap(),
+//                labelsById = labels.associateBy { it.id },
+//                allRecords = emptyList()
+//            )
+//        }
+//
+//        val labelsById = labels.associateBy { it.id }
+//        val groupedByDay = HashMap<Long, MutableList<IndexedRecord>>()
+//        val allIndexed = ArrayList<IndexedRecord>(records.size)
+//
+//        for (details in records) {
+//            val rec = details.record
+//            val zdt = Instant.ofEpochMilli(rec.startTimestamp).atZone(zoneId)
+//            val date: LocalDate = zdt.toLocalDate()
+//            val epochDay = date.toEpochDay()
+//            val startHourFloat = zdt.hour + (zdt.minute / 60f) + (zdt.second / 3600f)
+//
+//            val resolvedLabel = details.label ?: rec.labelId?.let { labelsById[it] }
+//            val indexed = IndexedRecord(
+//                id = rec.id,
+//                startTimestampMillis = rec.startTimestamp,
+//                startHourFloat = startHourFloat,
+//                durationSeconds = rec.value,
+//                labelId = rec.labelId,
+//                label = resolvedLabel
+//            )
+//
+//            allIndexed.add(indexed)
+//            groupedByDay.getOrPut(epochDay) { ArrayList() }.add(indexed)
+//        }
+//
+//        val buckets = HashMap<Long, DayActivityBucket>(groupedByDay.size)
+//        for ((day, dayRecords) in groupedByDay) {
+//            var totalSec = 0
+//            for (r in dayRecords) {
+//                totalSec += r.durationSeconds
+//            }
+//            buckets[day] = DayActivityBucket(
+//                epochDay = day,
+//                totalSeconds = totalSec,
+//                recordCount = dayRecords.size,
+//                records = dayRecords
+//            )
+//        }
+//
+//        return ActivityDataIndex(
+//            byDay = buckets,
+//            labelsById = labelsById,
+//            allRecords = allIndexed
+//        )
+//    }
+}
 
-        val labelsById = labels.associateBy { it.id }
-        val groupedByDay = HashMap<Long, MutableList<IndexedRecord>>()
-        val allIndexed = ArrayList<IndexedRecord>(records.size)
-
-        for (details in records) {
-            val rec = details.record
-            val zdt = Instant.ofEpochMilli(rec.startTimestamp).atZone(zoneId)
-            val date: LocalDate = zdt.toLocalDate()
-            val epochDay = date.toEpochDay()
-            val startHourFloat = zdt.hour + (zdt.minute / 60f) + (zdt.second / 3600f)
-
-            val resolvedLabel = details.label ?: rec.labelId?.let { labelsById[it] }
-            val indexed = IndexedRecord(
-                id = rec.id,
-                startTimestampMillis = rec.startTimestamp,
-                startHourFloat = startHourFloat,
-                durationSeconds = rec.value,
-                labelId = rec.labelId,
-                label = resolvedLabel
-            )
-
-            allIndexed.add(indexed)
-            groupedByDay.getOrPut(epochDay) { ArrayList() }.add(indexed)
-        }
-
-        val buckets = HashMap<Long, DayActivityBucket>(groupedByDay.size)
-        for ((day, dayRecords) in groupedByDay) {
-            var totalSec = 0
-            for (r in dayRecords) {
-                totalSec += r.durationSeconds
-            }
-            buckets[day] = DayActivityBucket(
-                epochDay = day,
-                totalSeconds = totalSec,
-                recordCount = dayRecords.size,
-                records = dayRecords
-            )
-        }
-
+internal fun buildActivityIndex(
+    records: List<TimerRecordDetails>,
+    labels: List<Label>,
+    zoneId: ZoneId
+): ActivityDataIndex {
+    if (records.isEmpty()) {
         return ActivityDataIndex(
-            byDay = buckets,
-            labelsById = labelsById,
-            allRecords = allIndexed
+            labelsById = labels.associateBy { it.id }
         )
     }
+
+    val labelsById = labels.associateBy { it.id }
+    val groupedByDay = HashMap<Long, MutableList<IndexedRecord>>()
+    val allIndexed = ArrayList<IndexedRecord>(records.size)
+
+    for (details in records) {
+        val rec = details.record
+        val zdt = Instant.ofEpochMilli(rec.startTimestamp).atZone(zoneId)
+        val epochDay = zdt.toLocalDate().toEpochDay()
+        val startHourFloat = zdt.hour + zdt.minute / 60f + zdt.second / 3600f
+
+        val resolvedLabel = details.label ?: rec.labelId?.let { labelsById[it] }
+
+        val indexed = IndexedRecord(
+            id = rec.id,
+            startTimestampMillis = rec.startTimestamp,
+            startHourFloat = startHourFloat,
+            durationSeconds = rec.value,
+            labelId = rec.labelId,
+            label = resolvedLabel
+        )
+
+        allIndexed.add(indexed)
+        groupedByDay.getOrPut(epochDay) { ArrayList() }.add(indexed)
+    }
+
+    val buckets = HashMap<Long, DayActivityBucket>(groupedByDay.size)
+
+    for ((day, dayRecords) in groupedByDay) {
+        buckets[day] = DayActivityBucket(
+            epochDay = day,
+            totalSeconds = dayRecords.sumOf { it.durationSeconds },
+            recordCount = dayRecords.size,
+            records = dayRecords
+        )
+    }
+
+    return ActivityDataIndex(
+        byDay = buckets,
+        labelsById = labelsById,
+        allRecords = allIndexed
+    )
 }

@@ -47,11 +47,13 @@ import com.literandltx.betime.data.model.TimerRecordDetails
 import com.literandltx.betime.data.preferences.AppThemeMode
 import com.literandltx.betime.data.preferences.AppThemeModeProvider
 import com.literandltx.betime.ui.screens.activity.ActivityDataIndex
+import com.literandltx.betime.ui.screens.activity.buildActivityIndex
 import com.literandltx.betime.ui.screens.activity.shared.WidgetContainer
 import com.literandltx.betime.ui.theme.TimerTheme
 import com.literandltx.betime.util.DEFAULT_PADDING_CHAR
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 import java.util.Calendar
@@ -112,7 +114,6 @@ data class DayColumnData(
 
 @Composable
 fun CalendarWidget(
-    records: List<TimerRecordDetails>,
     height: Dp,
     modifier: Modifier = Modifier,
     index: ActivityDataIndex = ActivityDataIndex(),
@@ -431,7 +432,11 @@ fun CalendarWidgetPreview(
         ) {
             Box(modifier = Modifier.padding(16.dp)) {
                 CalendarWidget(
-                    records = sampleRecords,
+                    index = buildActivityIndex(
+                        records = sampleRecords,
+                        labels = listOf(workLabel, studyLabel),
+                        zoneId = ZoneId.systemDefault()
+                    ),
                     height = 320.dp,
                     config = config
                 )

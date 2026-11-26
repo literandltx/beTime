@@ -42,6 +42,7 @@ import com.literandltx.betime.ui.screens.activity.widgets.heatmap.HeatmapContain
 import com.literandltx.betime.ui.screens.activity.widgets.histogram.HistogramWidget
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import java.time.ZoneId
 
 private const val TAG = "ActivityScreen"
 
@@ -176,7 +177,6 @@ fun ActivityScreenContent(
                     )
 
                     WidgetType.CALENDAR -> CalendarWidget(
-                        records = uiState.records,
                         index = uiState.index,
                         height = halfWidgetHeight,
                         isEditing = isEditing,
@@ -188,7 +188,6 @@ fun ActivityScreenContent(
                     )
 
                     WidgetType.HEATMAP -> HeatmapContainer(
-                        records = uiState.records,
                         index = uiState.index,
                         height = halfWidgetHeight,
                         unitLabel = "records",
@@ -201,7 +200,6 @@ fun ActivityScreenContent(
                     )
 
                     WidgetType.HISTOGRAM -> HistogramWidget(
-                        records = uiState.records,
                         labels = uiState.labels,
                         index = uiState.index,
                         height = halfWidgetHeight,
@@ -221,42 +219,55 @@ fun ActivityScreenContent(
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 fun ActivityScreenContentPreview() {
+    val labels = listOf(
+        Label(id = 1, name = "Work", colorArgb = 0xFF4285F4.toInt()),
+        Label(id = 2, name = "Study", colorArgb = 0xFFEA4335.toInt()),
+        Label(id = 3, name = "Exercise", colorArgb = 0xFF34A853.toInt())
+    )
+
+    val now = System.currentTimeMillis()
+
+    val records = listOf(
+        TimerRecordDetails(
+            record = TimerRecord(
+                id = 1,
+                value = 120,
+                startTimestamp = now - 7200000,
+                labelId = 1
+            ),
+            label = labels[0]
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(
+                id = 2,
+                value = 3600,
+                startTimestamp = now - 3600000,
+                labelId = 2
+            ),
+            label = labels[1]
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(
+                id = 3,
+                value = 90,
+                startTimestamp = now,
+                labelId = 3
+            ),
+            label = labels[2]
+        )
+    )
+
+    val index = buildActivityIndex(
+        records = records,
+        labels = labels,
+        zoneId = ZoneId.systemDefault()
+    )
+
     ActivityScreenContent(
         uiState = ActivityUiState(
-            records = listOf(
-                TimerRecordDetails(
-                    record = TimerRecord(
-                        id = 1,
-                        value = 120,
-                        startTimestamp = System.currentTimeMillis() - 7200000,
-                        labelId = 1
-                    ),
-                    label = Label(id = 1, name = "Work", colorArgb = 0xFF4285F4.toInt())
-                ),
-                TimerRecordDetails(
-                    record = TimerRecord(
-                        id = 2,
-                        value = 60,
-                        startTimestamp = System.currentTimeMillis() - 3600000,
-                        labelId = 2
-                    ),
-                    label = Label(id = 2, name = "Study", colorArgb = 0xFFEA4335.toInt())
-                ),
-                TimerRecordDetails(
-                    record = TimerRecord(
-                        id = 3,
-                        value = 90,
-                        startTimestamp = System.currentTimeMillis(),
-                        labelId = 3
-                    ),
-                    label = Label(id = 3, name = "Exercise", colorArgb = 0xFF34A853.toInt())
-                )
-            ),
-            labels = listOf(
-                Label(id = 1, name = "Work", colorArgb = 0xFF4285F4.toInt()),
-                Label(id = 2, name = "Study", colorArgb = 0xFFEA4335.toInt()),
-                Label(id = 3, name = "Exercise", colorArgb = 0xFF34A853.toInt())
-            )
+            records = records,
+            labels = labels,
+            index = index
         )
     )
 }

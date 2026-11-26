@@ -21,20 +21,23 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.literandltx.betime.R
+import com.literandltx.betime.data.model.Label
 import com.literandltx.betime.data.model.TimerRecord
 import com.literandltx.betime.data.model.TimerRecordDetails
 import com.literandltx.betime.data.preferences.AppThemeMode
 import com.literandltx.betime.data.preferences.AppThemeModeProvider
 import com.literandltx.betime.ui.screens.activity.ActivityDataIndex
+import com.literandltx.betime.ui.screens.activity.buildActivityIndex
 import com.literandltx.betime.ui.screens.activity.shared.WidgetContainer
+import com.literandltx.betime.ui.screens.activity.widgets.calendar.CalendarWidgetConfig
 import com.literandltx.betime.ui.theme.TimerTheme
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
 import java.util.Calendar
 
 @Composable
 fun HeatmapContainer(
-    records: List<TimerRecordDetails>,
     height: Dp,
     modifier: Modifier = Modifier,
     index: ActivityDataIndex = ActivityDataIndex(),
@@ -110,16 +113,18 @@ fun HeatmapContainer(
 fun HeatmapContainerPreview(
     @PreviewParameter(AppThemeModeProvider::class) themeMode: AppThemeMode
 ) {
-    val now = Calendar.getInstance()
+    val workLabel = Label(id = 1, name = "Work", colorArgb = 0xFF4285F4.toInt(), orderIndex = 0)
+    val studyLabel = Label(id = 2, name = "Study", colorArgb = 0xFF34A853.toInt(), orderIndex = 1)
+    val nowMillis = System.currentTimeMillis()
+
     val sampleRecords = listOf(
         TimerRecordDetails(
-            record = TimerRecord(
-                id = 1,
-                labelId = 1,
-                startTimestamp = now.timeInMillis,
-                value = 1800
-            ),
-            label = null
+            record = TimerRecord(id = 1, value = 7200, startTimestamp = nowMillis, labelId = 1),
+            label = workLabel
+        ),
+        TimerRecordDetails(
+            record = TimerRecord(id = 2, value = 5400, startTimestamp = nowMillis - 3_600_000L, labelId = 2),
+            label = studyLabel
         )
     )
 
@@ -130,7 +135,11 @@ fun HeatmapContainerPreview(
         ) {
             Box(modifier = Modifier.padding(16.dp)) {
                 HeatmapContainer(
-                    records = sampleRecords,
+                    index = buildActivityIndex(
+                        records = sampleRecords,
+                        labels = listOf(workLabel, studyLabel),
+                        zoneId = ZoneId.systemDefault()
+                    ),
                     height = 320.dp,
                     unitLabel = stringResource(R.string.recordsMessage)
                 )

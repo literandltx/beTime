@@ -46,6 +46,7 @@ import com.literandltx.betime.data.model.TimerRecordDetails
 import com.literandltx.betime.data.preferences.AppThemeMode
 import com.literandltx.betime.data.preferences.AppThemeModeProvider
 import com.literandltx.betime.ui.screens.activity.ActivityDataIndex
+import com.literandltx.betime.ui.screens.activity.buildActivityIndex
 import com.literandltx.betime.ui.screens.activity.shared.LabelSelectorModal
 import com.literandltx.betime.ui.screens.activity.shared.ThreeOptionTimeSelectorModal
 import com.literandltx.betime.ui.screens.activity.shared.TimeSpan
@@ -53,6 +54,7 @@ import com.literandltx.betime.ui.screens.activity.shared.WidgetContainer
 import com.literandltx.betime.ui.theme.TimerTheme
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
 import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.pow
@@ -66,7 +68,6 @@ data class ChartBucket(val label: String, val minutes: Int)
 
 @Composable
 fun HistogramWidget(
-    records: List<TimerRecordDetails>,
     labels: List<Label>,
     height: Dp,
     modifier: Modifier = Modifier,
@@ -81,7 +82,6 @@ fun HistogramWidget(
     initialTimeSpan: TimeSpan = TimeSpan.DAY,
     dragModifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     var showTimeSelectorModal by remember { mutableStateOf(false) }
     var showLabelSelectorModal by remember { mutableStateOf(false) }
 
@@ -635,7 +635,11 @@ fun HistogramWidgetPreview(
         ) {
             Box(modifier = Modifier.padding(16.dp)) {
                 HistogramWidget(
-                    records = sampleRecords,
+                    index = buildActivityIndex(
+                        records = sampleRecords,
+                        labels = sampleLabels,
+                        zoneId = ZoneId.systemDefault()
+                    ),
                     labels = sampleLabels,
                     height = 320.dp,
                     showComparison = true
